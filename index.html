@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disparo de WhatsApp - MyChatBot</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .hidden { display: none; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, textarea, select { width: 100%; padding: 8px; margin-top: 4px; }
+    button { margin-top: 15px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    #log { background: #f4f4f4; padding: 10px; height: 200px; overflow-y: auto; white-space: pre-wrap; margin-top: 20px; }
+    .inline-label { display: flex; align-items: center; margin-top: 10px; font-weight: bold; }
+    .inline-label input[type="checkbox"] { margin-left: 8px; width: auto; }
+  </style>
+</head>
+<body>
+  <h1>Disparo de WhatsApp - MyChatBot</h1>
+
+  <!-- Configurações -->
+  <div id="settings">
+    <h2>Configurações</h2>
+    <label for="cfgToken">Token da API (Bearer):</label>
+    <input type="text" id="cfgToken" placeholder="Insira seu JWT">
+    <label for="cfgEndpoint">URL da API (sem /url):</label>
+    <input type="text" id="cfgEndpoint" placeholder="https://api.mychatbot.com.br/v2/api/external/ID">
+    <label for="cfgExternalKey">Chave Externa (externalKey):</label>
+    <input type="text" id="cfgExternalKey" placeholder="ID_UNICA_DO_SISTEMA_CLIENTE">
+    <label for="cfgPassword">Senha de acesso:</label>
+    <input type="password" id="cfgPassword" placeholder="Defina uma senha">
+    <button id="saveSettings">Salvar Configurações</button>
+  </div>
+
+  <!-- Login -->
+  <div id="login" class="hidden">
+    <h2>Login</h2>
+    <label for="loginPassword">Senha:</label>
+    <input type="password" id="loginPassword" placeholder="Digite a senha">
+    <button id="doLogin">Entrar</button>
+    <div id="loginMsg" style="color:red; margin-top:10px;"></div>
+  </div>
+
+  <!-- Main -->
+  <div id="main" class="hidden">
+    <label class="inline-label" for="isClosed">
+      Fechar conversa após envio (isClosed)
+      <input type="checkbox" id="isClosed">
+    </label>
+    <label for="csvFile">Importar CSV (números 55+DDD+Número):</label>
+    <input type="file" id="csvFile" accept=".csv">
+    <label for="messageType">Tipo de envio:</label>
+    <select id="messageType">
+      <option value="text">Somente Texto</option>
+      <option value="image_text">Texto + Imagem via URL</option>
+    </select>
+    <label id="labelText" for="messageText">Texto da Mensagem:</label>
+    <textarea id="messageText" rows="4" placeholder="Digite sua mensagem aqui"></textarea>
+    <div id="divImage" class="hidden">
+      <label for="imageUrl">URL da Imagem:</label>
+      <input type="url" id="imageUrl" placeholder="https://exemplo.com/imagem.png">
+    </div>
+    <label for="intervalSeconds">Intervalo entre envios (segundos):</label>
+    <input type="number" id="intervalSeconds" min="0" placeholder="Ex: 5">
+    <button id="sendBtn">Enviar</button>
+    <pre id="log"></pre>
+  </div>
+
+  <script>
+    // State elements
+    const settingsDiv = document.getElementById('settings');
+    const loginDiv = document.getElementById('login');
+    const mainDiv = document.getElementById('main');
+
+    const saveBtn = document.getElementById('saveSettings');
+    const doLoginBtn = document.getElementById('doLogin');
+
+    // Save configuration to localStorage
+    saveBtn.addEventListener('click', () => {
+      const token = document.getElementById('cfgToken').value.trim();
+      const endpoint = document.getElementById('cfgEndpoint').value.trim();
+      const externalKey = document.getElementById('cfgExternalKey').value.trim();
+      const pwd = document.getElementById('cfgPassword').value;
+      if (!token || !endpoint || !externalKey || !pwd) {
+        alert('Todos os campos de configuração são obrigatórios.'); return;
+      }
+      localStorage.setItem('apiToken', token);
+      localStorage.setItem('apiEndpoint', endpoint.replace(/\/+$/, ''));
+      localStorage.setItem('externalKey', externalKey);
+      localStorage.setItem('accessPwd', pwd);
+      settingsDiv.classList.add('hidden');
+      loginDiv.classList.remove('hidden');
+    });
+
+    // Handle login
+    doLoginBtn.addEventListener('click', () => {
+      const inputPwd = document.getElementById('loginPassword').value;
+      if (inputPwd === localStorage.getItem('accessPwd')) {
+        loginDiv.classList.add('hidden');
+        mainDiv.classList.remove('hidden');
+      } else {
+        document.getElementById('loginMsg').textContent = 'Senha incorreta.';
+      }
+    });
+
+    // Main logic
+    const typeEl = document.getElementById('messageType');
+    const divImage = document.getElementById('divImage');
+    const labelText = document.getElementById('labelText');
+    const sendBtn = document.getElementById('sendBtn');
+    const log = document.getElementById('log');
+
+    function updateFields() {
+      const type = typeEl.value;
+      if (type === 'text') divImage.classList.add('hidden');
+      else divImage.classList.remove('hidden');
+      labelText.textContent = type === 'text' ? 'Texto da Mensagem:' : 'Texto + Legenda:';
+    }
+    typeEl.addEventListener('change', updateFields);
+    updateFields();
+
+    sendBtn.addEventListener('click', () => {
+      const file = document.getElementById('csvFile').files[0];
+      const token = localStorage.getItem('apiToken');
+      const endpoint = localStorage.getItem('apiEndpoint');
+      const externalKey = localStorage.getItem('externalKey');
+      const isClosed = document.getElementById('isClosed').checked;
+      const type = typeEl.value;
+      const text = document.getElementById('messageText').value.trim();
+      const imageUrl = document.getElementById('imageUrl').value.trim();
+      const interval = parseInt(document.getElementById('intervalSeconds').value, 10) || 0;
+
+      if (!file || !token || !endpoint || !externalKey) {
+        alert('Dados de configuração faltando.'); return;
+      }
+      if (!text) { alert('Texto obrigatório.'); return; }
+      if (type === 'image_text' && !imageUrl) { alert('URL da imagem obrigatória.'); return; }
+
+      Papa.parse(file, { header:false, skipEmptyLines:true,
+        complete: res => {
+          const nums = res.data.map(r=> Array.isArray(r)?r[0].trim():r.trim()).filter(n=>n);
+          sendAll(nums, token, endpoint, externalKey, isClosed, type, text, imageUrl, interval);
+        }, error: e=> alert('Erro CSV: '+e.message)
+      });
+    });
+
+    async function sendAll(nums, token, endpoint, externalKey, isClosed, type, text, imageUrl, interval) {
+      for (let i=0; i<nums.length; i++){
+        await sendMsg(nums[i], token, endpoint, externalKey, isClosed, type, text, imageUrl);
+        if (interval>0 && i<nums.length-1) await new Promise(r=>setTimeout(r,interval*1000));
+      }
+      log.textContent += '\nConcluído.';
+    }
+
+    async function sendMsg(number, token, endpoint, externalKey, isClosed, type, text, imageUrl) {
+      let entry=`[${number}] -> `;
+      const url = type==='text'?endpoint:`${endpoint}/url`;   
+      const payload={number,externalKey,isClosed,body:text}; if(type==='image_text')payload.mediaUrl=imageUrl;
+      try{
+        const resp=await fetch(url,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const result=await resp.json();
+        entry+=(result.success||resp.ok)?'Enviado':'Erro:'+JSON.stringify(result);
+      }catch(e){entry+='Falha:'+e.message;}
+      log.textContent+=entry+'\n';
+    }
+  </script>
+</body>
+</html>
