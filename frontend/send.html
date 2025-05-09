@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Envio - Disparo WhatsApp</title>
+  <title>Envio – Disparo WhatsApp</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
@@ -17,13 +17,17 @@
   </style>
 </head>
 <body>
-  <h1>Envio - Disparo WhatsApp</h1>
+  <h1>Envio – Disparo WhatsApp</h1>
+
+  <!-- Login -->
   <div id="login">
     <label for="loginPwd">Senha:</label>
-    <input type="password" id="loginPwd" placeholder="Senha">
+    <input type="password" id="loginPwd" placeholder="Digite a senha configurada">
     <button id="doLogin">Entrar</button>
     <div id="loginMsg" style="color:red; margin-top:10px;"></div>
   </div>
+
+  <!-- Main -->
   <div id="main" class="hidden">
     <div class="inline-label">
       <span>Fechar conversa (isClosed):</span>
@@ -31,87 +35,107 @@
     </div>
     <label for="csvFile">Importar CSV:</label>
     <input type="file" id="csvFile" accept=".csv">
+
     <label for="messageType">Tipo de envio:</label>
     <select id="messageType">
       <option value="text">Somente Texto</option>
       <option value="image_text">Texto + Imagem</option>
     </select>
-    <label for="messageText" id="labelText">Texto da Mensagem:</label>
+
+    <label id="labelText" for="messageText">Texto da Mensagem:</label>
     <textarea id="messageText" rows="4" placeholder="Digite sua mensagem"></textarea>
+
     <div id="divImage" class="hidden">
       <label for="imageUrl">URL da Imagem:</label>
       <input type="url" id="imageUrl" placeholder="https://exemplo.com/imagem.png">
     </div>
+
     <label for="intervalSeconds">Intervalo (segundos):</label>
     <input type="number" id="intervalSeconds" min="0" value="0">
+
     <button id="sendBtn">Enviar</button>
     <pre id="log"></pre>
   </div>
+
   <script>
     const apiUrl = 'http://localhost:3000';
 
     document.addEventListener('DOMContentLoaded', () => {
       const loginDiv = document.getElementById('login');
-      const mainDiv = document.getElementById('main');
+      const mainDiv  = document.getElementById('main');
+      const doLogin  = document.getElementById('doLogin');
+      const msgInput = document.getElementById('loginPwd');
+      const msgErr   = document.getElementById('loginMsg');
+      const typeEl   = document.getElementById('messageType');
+
+      // Exibe login, esconde main
       loginDiv.classList.remove('hidden');
       mainDiv.classList.add('hidden');
 
-      const typeEl = document.getElementById('messageType');
-      function updateImageField() {
-        const imgDiv = document.getElementById('divImage');
+      // Controla aparição do campo imagem
+      function toggleImage() {
+        const div = document.getElementById('divImage');
         const lbl = document.getElementById('labelText');
         if (typeEl.value === 'text') {
-          imgDiv.classList.add('hidden');
+          div.classList.add('hidden');
           lbl.textContent = 'Texto da Mensagem:';
         } else {
-          imgDiv.classList.remove('hidden');
+          div.classList.remove('hidden');
           lbl.textContent = 'Texto + Legenda:';
         }
       }
-      typeEl.addEventListener('change', updateImageField);
-      updateImageField();
+      typeEl.addEventListener('change', toggleImage);
+      toggleImage();
 
-      document.getElementById('doLogin').addEventListener('click', () => {
-        const pwd = document.getElementById('loginPwd').value;
-        if (pwd === localStorage.getItem('accessPwd')) {
+      // Validação da senha
+      doLogin.addEventListener('click', () => {
+        const stored = localStorage.getItem('accessPwd');
+        if (!stored) {
+          msgErr.textContent = 'Nenhuma senha definida. Acesse config.html.';
+          return;
+        }
+        if (msgInput.value === stored) {
           loginDiv.classList.add('hidden');
           mainDiv.classList.remove('hidden');
         } else {
-          document.getElementById('loginMsg').textContent = 'Senha incorreta';
+          msgErr.textContent = 'Senha incorreta.';
         }
       });
     });
 
+    // Envio CSV e polling de job
     document.getElementById('sendBtn').addEventListener('click', () => {
       const file = document.getElementById('csvFile').files[0];
       if (!file) return alert('Selecione um CSV');
       Papa.parse(file, {
-        header: false, skipEmptyLines: true,
-        complete(r) {
-          fetch(apiUrl + '/dispatch', {
+        header: false,
+        skipEmptyLines: true,
+        complete(results) {
+          const payload = {
+            numbers: results.data.map(r => Array.isArray(r) ? r[0].trim() : r.trim()).filter(n => n),
+            token: localStorage.getItem('apiToken'),
+            endpoint: localStorage.getItem('apiEndpoint'),
+            externalKey: localStorage.getItem('externalKey'),
+            isClosed: document.getElementById('isClosed').checked,
+            messageType: document.getElementById('messageType').value,
+            messageText: document.getElementById('messageText').value,
+            imageUrl: document.getElementById('imageUrl').value,
+            intervalSeconds: parseInt(document.getElementById('intervalSeconds').value, 10) || 0
+          };
+          fetch(`${apiUrl}/dispatch`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-              numbers: r.data.map(x => Array.isArray(x) ? x[0].trim() : x.trim()).filter(x => x),
-              token: localStorage.getItem('apiToken'),
-              endpoint: localStorage.getItem('apiEndpoint'),
-              externalKey: localStorage.getItem('externalKey'),
-              isClosed: document.getElementById('isClosed').checked,
-              messageType: document.getElementById('messageType').value,
-              messageText: document.getElementById('messageText').value,
-              imageUrl: document.getElementById('imageUrl').value,
-              intervalSeconds: parseInt(document.getElementById('intervalSeconds').value, 10) || 0
-            })
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
           })
-          .then(res => res.json())
-          .then(job => {
+          .then(r => r.json())
+          .then(({ jobId }) => {
             const logEl = document.getElementById('log');
-            logEl.textContent = 'Job ' + job.jobId + ' iniciado';
+            logEl.textContent = `Job ${jobId} iniciado`;
             setInterval(() => {
-              fetch(apiUrl + '/jobs/' + job.jobId)
+              fetch(`${apiUrl}/jobs/${jobId}`)
                 .then(r => r.json())
                 .then(data => {
-                  logEl.textContent = data.logs.map(l => \`[${l.number}] -> ${l.success?'OK':'ERR'}\`).join('\n');
+                  logEl.textContent = data.logs.map(l => `[${l.number}] -> ${l.success?'OK':'ERR'}`).join('\n');
                 });
             }, 1000);
           });
