@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   disparo_whatsapp:
-    image: guihrst/disparo-whatspp:latest
+    image: guihorst/disparo-whatspp:latest
     logging:
       driver: json-file
       options:

@@ -89,8 +89,13 @@
     const divImage = document.getElementById('divImage');
     const labelText = document.getElementById('labelText');
     function updateFields() {
-      if (typeEl.value === 'text') { divImage.classList.add('hidden'); labelText.textContent = 'Texto da Mensagem:'; }
-      else { divImage.classList.remove('hidden'); labelText.textContent = 'Texto + Legenda:'; }
+      if (typeEl.value === 'text') {
+        divImage.classList.add('hidden');
+        labelText.textContent = 'Texto da Mensagem:';
+      } else {
+        divImage.classList.remove('hidden');
+        labelText.textContent = 'Texto + Legenda:';
+      }
     }
     typeEl.addEventListener('change', updateFields);
     updateFields();
@@ -102,17 +107,39 @@
       const isClosed = document.getElementById('isClosed').checked;
       const text = document.getElementById('messageText').value.trim();
       const imageUrl = document.getElementById('imageUrl').value.trim();
-      const interval = parseInt(document.getElementById('intervalSeconds').value,10)||0;
-      if (!file||!token||!endpoint||!externalKey) return alert('Dados de configuração faltando.');
+      const interval = parseInt(document.getElementById('intervalSeconds').value, 10) || 0;
+      if (!file || !token || !endpoint || !externalKey) return alert('Dados de configuração faltando.');
       if (!text) return alert('Texto obrigatório.');
-      if (typeEl.value==='image_text' && !imageUrl) return alert('URL da imagem obrigatória.');
-      Papa.parse(file,{header:false,skipEmptyLines:true,complete(res){const nums=res.data.map(r=>Array.isArray(r)?r[0].trim():r.trim()).filter(n=>n);sendAll(nums,token,endpoint,externalKey,isClosed,typeEl.value,text,imageUrl,interval);},error:e=>alert('Erro CSV:'+e.message)});
+      if (typeEl.value === 'image_text' && !imageUrl) return alert('URL da imagem obrigatória.');
+      Papa.parse(file, {
+        header: false, skipEmptyLines: true,
+        complete(res) {
+          const nums = res.data.map(r => Array.isArray(r) ? r[0].trim() : r.trim()).filter(n => n);
+          sendAll(nums, token, endpoint, externalKey, isClosed, typeEl.value, text, imageUrl, interval);
+        },
+        error(e) { alert('Erro CSV: ' + e.message); }
+      });
     });
-    async function sendAll(nums,token,endpoint,externalKey,isClosed,type,text,imageUrl,interval){
-      for(let i=0;i<nums.length;i++){await sendMsg(nums[i],token,endpoint,externalKey,isClosed,type,text,imageUrl);if(interval>0&&i<nums.length-1)await new Promise(r=>setTimeout(r,interval*1000));} }
-    async function sendMsg(number,token,endpoint,externalKey,isClosed,type,text,imageUrl){
-      let entry=`[${number}]->`;const url=type==='text'?endpoint:`${endpoint}/url`;const payload={number,externalKey,isClosed,body:text};if(type==='image_text')payload.mediaUrl=imageUrl;
-      try{const resp=await fetch(url,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(payload)});const result=await resp.json();entry+=(result.success||resp.ok)?'Enviado':'Erro:'+JSON.stringify(result);}catch(e){entry+='Falha:'+e.message;}document.getElementById('log').textContent+=entry+'\n';}
+    async function sendAll(nums, token, endpoint, externalKey, isClosed, type, text, imageUrl, interval) {
+      for (let i = 0; i < nums.length; i++) {
+        await sendMsg(nums[i], token, endpoint, externalKey, isClosed, type, text, imageUrl);
+        if (interval > 0 && i < nums.length - 1) await new Promise(r => setTimeout(r, interval * 1000));
+      }
+    }
+    async function sendMsg(number, token, endpoint, externalKey, isClosed, type, text, imageUrl) {
+      let entry = `[${number}] -> `;
+      const url = type === 'text' ? endpoint : `${endpoint}/url`;
+      const payload = { number, externalKey, isClosed, body: text };
+      if (type === 'image_text') payload.mediaUrl = imageUrl;
+      try {
+        const resp = await fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const result = await resp.json();
+        entry += (result.success || resp.ok) ? 'Enviado' : 'Erro: ' + JSON.stringify(result);
+      } catch (e) {
+        entry += 'Falha: ' + e.message;
+      }
+      document.getElementById('log').textContent += entry + '\n';
+    }
   </script>
 </body>
 </html>
