@@ -1,8 +1,4 @@
-# Node modules
-**/node_modules
-# macOS
-**/.DS_Store
-# Build output
-**/dist
-# Environment
-**/.env
+node_modules/
+.DS_Store
+dist/
+.env

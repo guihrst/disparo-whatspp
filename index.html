@@ -83,7 +83,8 @@
       const externalKey = document.getElementById('cfgExternalKey').value.trim();
       const pwd = document.getElementById('cfgPassword').value;
       if (!token || !endpoint || !externalKey || !pwd) {
-        alert('Todos os campos de configuração são obrigatórios.'); return;
+        alert('Todos os campos de configuração são obrigatórios.');
+        return;
       }
       localStorage.setItem('apiToken', token);
       localStorage.setItem('apiEndpoint', endpoint.replace(/\/+$/, ''));
@@ -132,37 +133,47 @@
       const interval = parseInt(document.getElementById('intervalSeconds').value, 10) || 0;
 
       if (!file || !token || !endpoint || !externalKey) {
-        alert('Dados de configuração faltando.'); return;
+        alert('Dados de configuração faltando.');
+        return;
       }
-      if (!text) { alert('Texto obrigatório.'); return; }
-      if (type === 'image_text' && !imageUrl) { alert('URL da imagem obrigatória.'); return; }
+      if (!text) {
+        alert('Texto obrigatório.');
+        return;
+      }
+      if (type === 'image_text' && !imageUrl) {
+        alert('URL da imagem obrigatória.');
+        return;
+      }
 
-      Papa.parse(file, { header:false, skipEmptyLines:true,
+      Papa.parse(file, { header: false, skipEmptyLines: true,
         complete: res => {
-          const nums = res.data.map(r=> Array.isArray(r)?r[0].trim():r.trim()).filter(n=>n);
+          const nums = res.data.map(r => Array.isArray(r) ? r[0].trim() : r.trim()).filter(n => n);
           sendAll(nums, token, endpoint, externalKey, isClosed, type, text, imageUrl, interval);
-        }, error: e=> alert('Erro CSV: '+e.message)
+        },
+        error: e => alert('Erro CSV: ' + e.message)
       });
     });
 
     async function sendAll(nums, token, endpoint, externalKey, isClosed, type, text, imageUrl, interval) {
-      for (let i=0; i<nums.length; i++){
+      for (let i = 0; i < nums.length; i++) {
         await sendMsg(nums[i], token, endpoint, externalKey, isClosed, type, text, imageUrl);
-        if (interval>0 && i<nums.length-1) await new Promise(r=>setTimeout(r,interval*1000));
+        if (interval > 0 && i < nums.length - 1) await new Promise(r => setTimeout(r, interval * 1000));
       }
       log.textContent += '\nConcluído.';
     }
 
     async function sendMsg(number, token, endpoint, externalKey, isClosed, type, text, imageUrl) {
-      let entry=`[${number}] -> `;
-      const url = type==='text'?endpoint:`${endpoint}/url`;   
-      const payload={number,externalKey,isClosed,body:text}; if(type==='image_text')payload.mediaUrl=imageUrl;
-      try{
-        const resp=await fetch(url,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(payload)});
-        const result=await resp.json();
-        entry+=(result.success||resp.ok)?'Enviado':'Erro:'+JSON.stringify(result);
-      }catch(e){entry+='Falha:'+e.message;}
-      log.textContent+=entry+'\n';
+      let entry = `[${number}] -> `;
+      const url = type === 'text' ? endpoint : `${endpoint}/url`;
+      const payload = { number, externalKey, isClosed, body: text }; if (type === 'image_text') payload.mediaUrl = imageUrl;
+      try {
+        const resp = await fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const result = await resp.json();
+        entry += (result.success || resp.ok) ? 'Enviado' : 'Erro:' + JSON.stringify(result);
+      } catch (e) {
+        entry += 'Falha:' + e.message;
+      }
+      log.textContent += entry + '\n';
     }
   </script>
 </body>

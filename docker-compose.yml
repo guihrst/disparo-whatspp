@@ -2,7 +2,5 @@ version: '3.7'
 services:
   disparo_whatsapp:
     build: .
-    container_name: disparo_whatsapp
     ports:
       - "8080:80"
-    restart: always
