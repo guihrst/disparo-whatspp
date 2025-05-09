@@ -16,28 +16,30 @@ app.post('/dispatch', (req, res) => {
   res.json({ jobId });
 });
 
-function sendNext(jobId) {
+async function sendNext(jobId) {
   const job = jobs[jobId];
   if (job.currentIndex >= job.numbers.length) return;
   const number = job.numbers[job.currentIndex];
   const url = job.messageType === 'text' ? job.endpoint : `${job.endpoint}/url`;
   const body = { number, externalKey: job.externalKey, isClosed: job.isClosed, body: job.messageText };
   if (job.messageType === 'image_text') body.mediaUrl = job.imageUrl;
-  fetch(url, {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + job.token, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  })
-    .then(r => r.json().then(data => {
-      job.logs.push({ number, success: !!data.success });
-      job.currentIndex++;
-      setTimeout(() => sendNext(jobId), job.intervalSeconds * 1000);
-    }))
-    .catch(() => {
-      job.logs.push({ number, success: false });
-      job.currentIndex++;
-      setTimeout(() => sendNext(jobId), job.intervalSeconds * 1000);
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + job.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || data.message || `Status ${res.status}`);
+    }
+    job.logs.push({ number, success: true });
+  } catch (err) {
+    job.logs.push({ number, success: false, error: err.message });
+  }
+  job.currentIndex++;
+  setTimeout(() => sendNext(jobId), job.intervalSeconds * 1000);
 }
 
 app.get('/jobs/:id', (req, res) => {

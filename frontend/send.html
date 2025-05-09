@@ -63,11 +63,9 @@
       const errMsg = document.getElementById('loginMsg');
       const typeEl = document.getElementById('messageType');
 
-      // show login, hide main
       loginDiv.classList.remove('hidden');
       mainDiv.classList.add('hidden');
 
-      // toggle image field
       function toggleImage() {
         const imgDiv = document.getElementById('divImage');
         const lbl = document.getElementById('labelText');
@@ -76,13 +74,12 @@
           lbl.textContent = 'Texto da Mensagem:';
         } else {
           imgDiv.classList.remove('hidden');
-          lbl.textContent = 'Texto + Imagem:';
+          lbl.textContent = 'Texto + Legenda:';
         }
       }
       typeEl.addEventListener('change', toggleImage);
       toggleImage();
 
-      // login validation
       doLogin.addEventListener('click', () => {
         const stored = localStorage.getItem('accessPwd');
         if (!stored) {
@@ -102,34 +99,36 @@
       const file = document.getElementById('csvFile').files[0];
       if (!file) return alert('Selecione um CSV');
       const backendUrl = localStorage.getItem('backendUrl');
+      const logEl = document.getElementById('log');
+      logEl.textContent = '';
       Papa.parse(file, {
         header: false, skipEmptyLines: true,
         complete(results) {
-          const payload = {
-            numbers: results.data.map(r => Array.isArray(r) ? r[0].trim() : r.trim()).filter(n => n),
-            token: localStorage.getItem('apiToken'),
-            endpoint: localStorage.getItem('apiEndpoint'),
-            externalKey: localStorage.getItem('externalKey'),
-            isClosed: document.getElementById('isClosed').checked,
-            messageType: document.getElementById('messageType').value,
-            messageText: document.getElementById('messageText').value,  
-            imageUrl: document.getElementById('imageUrl').value,  
-            intervalSeconds: parseInt(document.getElementById('intervalSeconds').value, 10) || 0
-          };
-          fetch(`${backendUrl}/dispatch`, {
+          fetch(\`\${backendUrl}/dispatch\`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+              numbers: results.data.map(r => Array.isArray(r)?r[0].trim():r.trim()).filter(n=>n),
+              token: localStorage.getItem('apiToken'),
+              endpoint: localStorage.getItem('apiEndpoint'),
+              externalKey: localStorage.getItem('externalKey'),
+              isClosed: document.getElementById('isClosed').checked,
+              messageType: document.getElementById('messageType').value,
+              messageText: document.getElementById('messageText').value,
+              imageUrl: document.getElementById('imageUrl').value,
+              intervalSeconds: parseInt(document.getElementById('intervalSeconds').value,10)||0
+            })
           })
           .then(r => r.json())
           .then(({ jobId }) => {
-            const logEl = document.getElementById('log');
-            logEl.textContent = `Job ${jobId} iniciado`;
+            logEl.textContent = \`Job \${jobId} iniciado\n\`;
             setInterval(() => {
-              fetch(`${backendUrl}/jobs/${jobId}`)
+              fetch(\`\${backendUrl}/jobs/\${jobId}\`)
                 .then(r => r.json())
                 .then(data => {
-                  logEl.textContent = data.logs.map(l => `[${l.number}] -> ${l.success ? 'OK' : 'ERR'}`).join('\n');
+                  logEl.textContent = data.logs.map(l =>
+                    \`[\${l.number}] -> \${l.success ? 'OK' : 'ERR: ' + (l.error || 'unknown')}\`
+                  ).join('\n');
                 });
             }, 1000);
           });
