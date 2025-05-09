@@ -16,32 +16,50 @@
   <label for="cfgToken">Token da API (Bearer):</label>
   <input type="text" id="cfgToken" placeholder="Digite seu JWT">
   <label for="cfgEndpoint">URL da API (sem /url):</label>
-  <input type="text" id="cfgEndpoint" placeholder="https://api.mychatbot.awti.com.br/v2/api/external/ID">
+  <input type="text" id="cfgEndpoint" placeholder="https://api.exemplo.com.br/v2/api/external/ID">
   <label for="cfgExternalKey">Chave Externa (externalKey):</label>
-  <input type="text" id="cfgExternalKey" placeholder="externalKey">
+  <input type="text" id="cfgExternalKey" placeholder="Chave Externa">
   <label for="cfgPassword">Senha de acesso:</label>
   <input type="password" id="cfgPassword" placeholder="Defina uma senha">
   <label for="cfgBackendUrl">URL do Backend de Dispatch:</label>
   <input type="text" id="cfgBackendUrl" placeholder="http://localhost:3000">
   <button id="saveBtn">Salvar Configurações</button>
+
   <script>
-    document.getElementById('saveBtn').onclick = () => {
+    document.addEventListener('DOMContentLoaded', () => {
+      // Prefill fields from localStorage if available
+      const token = localStorage.getItem('apiToken');
+      if (token) {
+        document.getElementById('cfgToken').value = token;
+        document.getElementById('cfgEndpoint').value = localStorage.getItem('apiEndpoint') || '';
+        document.getElementById('cfgExternalKey').value = localStorage.getItem('externalKey') || '';
+        document.getElementById('cfgPassword').value = localStorage.getItem('accessPwd') || '';
+        document.getElementById('cfgBackendUrl').value = localStorage.getItem('backendUrl') || '';
+      }
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
       const t = document.getElementById('cfgToken').value.trim();
       const e = document.getElementById('cfgEndpoint').value.trim();
       const k = document.getElementById('cfgExternalKey').value.trim();
       const p = document.getElementById('cfgPassword').value;
       const b = document.getElementById('cfgBackendUrl').value.trim();
+
       if (!t || !e || !k || !p || !b) {
         alert('Todos os campos são obrigatórios.');
         return;
       }
+
       localStorage.setItem('apiToken', t);
-      localStorage.setItem('apiEndpoint', e.replace(/\/+$/, ''));
+      // Remove trailing slashes
+      localStorage.setItem('apiEndpoint', e.replace(/\/+$|\/$/, ''));
       localStorage.setItem('externalKey', k);
       localStorage.setItem('accessPwd', p);
-      localStorage.setItem('backendUrl', b.replace(/\/+$/, ''));
+      localStorage.setItem('backendUrl', b.replace(/\/+$|\/$/, ''));
+
+      alert('Configurações salvas com sucesso!');
       window.location.href = 'send.html';
-    };
+    });
   </script>
 </body>
 </html>
