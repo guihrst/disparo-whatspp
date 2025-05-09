@@ -25,11 +25,8 @@
     <div id="loginMsg" style="color:red; margin-top:10px;"></div>
   </div>
   <div id="main" class="hidden">
-    <label class="inline-label">
-      <span>Fechar conversa:</span>
-      <input type="checkbox" id="isClosed">
-    </label>
-    <label for="csvFile">Importar CSV:</label>
+    <label class="inline-label"><span>Fechar conversa:</span><input type="checkbox" id="isClosed"></label>
+    <label for="csvFile">Importar CSV (55+DDD+Número):</label>
     <input type="file" id="csvFile" accept=".csv">
     <label for="messageType">Tipo de envio:</label>
     <select id="messageType">
@@ -48,65 +45,128 @@
     <pre id="log"></pre>
   </div>
   <script>
+    const STATE_KEY = 'dispatchState';
+    const LOGS_KEY = 'dispatchLogs';
+    const FORM_KEY = 'dispatchForm';
+    // redirect if not configured
     if (!localStorage.getItem('apiToken')) {
       alert('Configurações faltando.');
       window.location.href = 'config.html';
     }
+    // load form and state on DOMContent
+    document.addEventListener('DOMContentLoaded', () => {
+      loadForm();
+      loadLogs();
+      const state = JSON.parse(localStorage.getItem(STATE_KEY) || 'null');
+      if (state && state.numbers && state.currentIndex < state.numbers.length) {
+        if (confirm('Envio em andamento detectado. Deseja continuar?')) {
+          showMain();
+          resumeDispatch();
+        }
+      }
+    });
     document.getElementById('doLogin').addEventListener('click', () => {
-      if (document.getElementById('loginPwd').value === localStorage.getItem('accessPwd')) {
-        document.getElementById('login').classList.add('hidden');
-        document.getElementById('main').classList.remove('hidden');
+      const pwd = document.getElementById('loginPwd').value;
+      if (pwd === localStorage.getItem('accessPwd')) {
+        showMain();
       } else {
         document.getElementById('loginMsg').textContent = 'Senha incorreta.';
       }
     });
-    document.getElementById('messageType').addEventListener('change', () => {
+    function showMain() {
+      document.getElementById('login').classList.add('hidden');
+      document.getElementById('main').classList.remove('hidden');
+    }
+    // form persistence
+    ['messageType','messageText','imageUrl','intervalSeconds','isClosed'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('change', saveForm);
+      el.addEventListener('input', saveForm);
+    });
+    function saveForm() {
+      const form = {
+        isClosed: document.getElementById('isClosed').checked,
+        messageType: document.getElementById('messageType').value,
+        messageText: document.getElementById('messageText').value,
+        imageUrl: document.getElementById('imageUrl').value,
+        intervalSeconds: parseInt(document.getElementById('intervalSeconds').value,10) || 0
+      };
+      localStorage.setItem(FORM_KEY, JSON.stringify(form));
+      updateFields();
+    }
+    function loadForm() {
+      const form = JSON.parse(localStorage.getItem(FORM_KEY) || '{}');
+      if (form.messageType) {
+        document.getElementById('isClosed').checked = form.isClosed;
+        document.getElementById('messageType').value = form.messageType;
+        document.getElementById('messageText').value = form.messageText || '';
+        document.getElementById('imageUrl').value = form.imageUrl || '';
+        document.getElementById('intervalSeconds').value = form.intervalSeconds || 0;
+      }
+      updateFields();
+    }
+    function updateFields() {
+      const type = document.getElementById('messageType').value;
       const div = document.getElementById('divImage');
       const label = document.getElementById('labelText');
-      if (document.getElementById('messageType').value === 'text') {
+      if (type === 'text') {
         div.classList.add('hidden');
         label.textContent = 'Texto da Mensagem:';
       } else {
         div.classList.remove('hidden');
         label.textContent = 'Texto + Legenda:';
       }
-    });
+    }
+    function loadLogs() {
+      const logs = JSON.parse(localStorage.getItem(LOGS_KEY) || '[]');
+      document.getElementById('log').textContent = logs.join('\n');
+    }
     document.getElementById('sendBtn').addEventListener('click', () => {
       const file = document.getElementById('csvFile').files[0];
+      if (!file) return alert('Selecione um CSV.');
       const token = localStorage.getItem('apiToken');
-      const endpoint = localStorage.getItem('apiEndpoint').replace(/\/+$/, '');
+      const endpoint = localStorage.getItem('apiEndpoint').replace(/\/+$/,'');
       const externalKey = localStorage.getItem('externalKey');
-      const isClosed = document.getElementById('isClosed').checked;
-      const type = document.getElementById('messageType').value;
-      const text = document.getElementById('messageText').value.trim();
-      const imageUrl = document.getElementById('imageUrl').value.trim();
-      const interval = parseInt(document.getElementById('intervalSeconds').value,10)||0;
-      Papa.parse(file, {
-        header:false, skipEmptyLines:true,
+      const { isClosed, messageType, messageText, imageUrl, intervalSeconds } = JSON.parse(localStorage.getItem(FORM_KEY) || '{}');
+      Papa.parse(file, { header:false, skipEmptyLines:true,
         complete(results) {
-          results.data.forEach((r,i) => {
-            const number = Array.isArray(r)?r[0].trim():r.trim();
-            setTimeout(() => {
-              fetch(type==='text'?endpoint:endpoint+'/url', {
-                method:'POST',
-                headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
-                body:JSON.stringify({number,externalKey,isClosed,body:text, ...(type==='image_text'&&{mediaUrl:imageUrl})})
-              })
-              .then(resp => {
-                const ok = resp.ok;
-                return resp.json().then(data => {
-                  document.getElementById('log').textContent += `[${number}] -> ${(data.success||ok)?'Enviado':'Erro:'+JSON.stringify(data)}\n`;
-                });
-              })
-              .catch(err => {
-                document.getElementById('log').textContent += `[${number}] -> Falha: ${err.message}\n`;
-              });
-            }, i*interval*1000);
-          });
+          const numbers = results.data.map(r => Array.isArray(r)?r[0].trim():r.trim()).filter(n=>n);
+          const state = { numbers, currentIndex:0, isClosed, messageType, messageText, imageUrl, intervalSeconds, token, endpoint, externalKey };
+          localStorage.setItem(STATE_KEY, JSON.stringify(state));
+          localStorage.setItem(LOGS_KEY, JSON.stringify([]));
+          showMain(); resumeDispatch();
         },
-        error(e){alert('Erro CSV: '+e.message);}
+        error(e){ alert('Erro CSV: '+e.message); }
       });
     });
+    function resumeDispatch() {
+      const state = JSON.parse(localStorage.getItem(STATE_KEY));
+      const logs = JSON.parse(localStorage.getItem(LOGS_KEY) || '[]');
+      if (state.currentIndex >= state.numbers.length) {
+        alert('Envio concluído.');
+        localStorage.removeItem(STATE_KEY);
+        return;
+      }
+      const number = state.numbers[state.currentIndex];
+      sendMsg(number, state).then(success => {
+        logs.push(`[${number}] -> ${success?'Enviado':'Erro'}`);
+        localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+        document.getElementById('log').textContent = logs.join('\n');
+        state.currentIndex++;
+        localStorage.setItem(STATE_KEY, JSON.stringify(state));
+        setTimeout(resumeDispatch, state.intervalSeconds*1000);
+      });
+    }
+    function sendMsg(number, state) {
+      const url = state.messageType==='text'?state.endpoint:state.endpoint+'/url';
+      const body = { number, externalKey: state.externalKey, isClosed: state.isClosed, body: state.messageText };
+      if (state.messageType==='image_text') body.mediaUrl = state.imageUrl;
+      return fetch(url, {
+        method:'POST',
+        headers:{ 'Authorization':'Bearer '+state.token, 'Content-Type':'application/json' },
+        body:JSON.stringify(body)
+      }).then(resp => resp.ok);
+    }
   </script>
 </body>
 </html>

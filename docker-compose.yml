@@ -1,11 +1,11 @@
-version: '3.7'
+version:'3.7'
 services:
   disparo_whatsapp:
-    build: .
+    build:.
     logging:
-      driver: json-file
+      driver:json-file
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size:"10m"
+        max-file:"3"
     ports:
-      - "8080:80"
+      -"8080:80"
