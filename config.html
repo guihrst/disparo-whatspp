@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuração - Disparo WhatsApp</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input { width: 100%; padding: 8px; margin-top: 4px; }
+    button { margin-top: 15px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Configurações - Disparo WhatsApp</h1>
+  <label for="cfgToken">Token da API (Bearer)</label>
+  <input type="text" id="cfgToken" placeholder="Insira seu JWT">
+  <label for="cfgEndpoint">URL da API (sem /url)</label>
+  <input type="text" id="cfgEndpoint" placeholder="https://api.mychatbot.com.br/v2/api/external/ID">
+  <label for="cfgExternalKey">Chave Externa (externalKey)</label>
+  <input type="text" id="cfgExternalKey" placeholder="ID_UNICA_DO_SISTEMA_CLIENTE">
+  <label for="cfgPassword">Senha de acesso</label>
+  <input type="password" id="cfgPassword" placeholder="Defina uma senha">
+  <button id="saveBtn">Salvar e ir para envio</button>
+  <script>
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const token = document.getElementById('cfgToken').value.trim();
+      const endpoint = document.getElementById('cfgEndpoint').value.trim();
+      const externalKey = document.getElementById('cfgExternalKey').value.trim();
+      const pwd = document.getElementById('cfgPassword').value;
+      if (!token || !endpoint || !externalKey || !pwd) {
+        return alert('Todos os campos são obrigatórios.');
+      }
+      localStorage.setItem('apiToken', token);
+      localStorage.setItem('apiEndpoint', endpoint.replace(/\/+$/, ''));
+      localStorage.setItem('externalKey', externalKey);
+      localStorage.setItem('accessPwd', pwd);
+      window.location.href = 'send.html';
+    });
+  </script>
+</body>
+</html>

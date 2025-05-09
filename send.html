@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Envio - Disparo WhatsApp</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .hidden { display: none; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, textarea, select { width: 100%; padding: 8px; margin-top: 4px; }
+    button { margin-top: 15px; padding: 10px 20px; font-size: 16px; }
+    #log { background: #f4f4f4; padding: 10px; height: 200px; overflow-y: auto; white-space: pre-wrap; margin-top: 20px; }
+    .inline-label { display: flex; align-items: center; margin-top: 10px; font-weight: bold; }
+    .inline-label input[type="checkbox"] { margin-left: 8px; width: auto; }
+  </style>
+</head>
+<body>
+  <h1>Envio de Mensagens - MyChatBot</h1>
+
+  <div id="login">
+    <h2>Login</h2>
+    <label for="loginPassword">Senha</label>
+    <input type="password" id="loginPassword" placeholder="Digite a senha">
+    <button id="doLogin">Entrar</button>
+    <div id="loginMsg" style="color:red; margin-top:10px;"></div>
+  </div>
+
+  <div id="main" class="hidden">
+    <label class="inline-label" for="isClosed">
+      Fechar conversa após envio (isClosed)
+      <input type="checkbox" id="isClosed">
+    </label>
+    <label for="csvFile">Importar CSV (números 55+DDD+Número)</label>
+    <input type="file" id="csvFile" accept=".csv">
+    <label for="messageType">Tipo de envio</label>
+    <select id="messageType">
+      <option value="text">Somente Texto</option>
+      <option value="image_text">Texto + Imagem via URL</option>
+    </select>
+    <label id="labelText" for="messageText">Texto da Mensagem</label>
+    <textarea id="messageText" rows="4" placeholder="Digite sua mensagem"></textarea>
+    <div id="divImage" class="hidden">
+      <label for="imageUrl">URL da Imagem</label>
+      <input type="url" id="imageUrl" placeholder="https://exemplo.com/imagem.png">
+    </div>
+    <label for="intervalSeconds">Intervalo entre envios (segundos)</label>
+    <input type="number" id="intervalSeconds" min="0" placeholder="Ex: 5">
+    <button id="sendBtn">Enviar</button>
+    <pre id="log"></pre>
+  </div>
+
+  <script>
+    // Redirect if no settings
+    if (!localStorage.getItem('apiToken') || !localStorage.getItem('apiEndpoint') ||
+        !localStorage.getItem('externalKey') || !localStorage.getItem('accessPwd')) {
+      window.location.href = 'config.html';
+    }
+
+    const loginDiv = document.getElementById('login');
+    const mainDiv = document.getElementById('main');
+    document.getElementById('doLogin').addEventListener('click', () => {
+      if (document.getElementById('loginPassword').value === localStorage.getItem('accessPwd')) {
+        loginDiv.classList.add('hidden');
+        mainDiv.classList.remove('hidden');
+      } else {
+        document.getElementById('loginMsg').textContent = 'Senha incorreta.';
+      }
+    });
+
+    const typeEl = document.getElementById('messageType');
+    const divImage = document.getElementById('divImage');
+    const labelText = document.getElementById('labelText');
+    function updateFields() {
+      if (typeEl.value === 'text') {
+        divImage.classList.add('hidden');
+        labelText.textContent = 'Texto da Mensagem';
+      } else {
+        divImage.classList.remove('hidden');
+        labelText.textContent = 'Texto + Legenda';
+      }
+    }
+    typeEl.addEventListener('change', updateFields);
+    updateFields();
+
+    document.getElementById('sendBtn').addEventListener('click', () => {
+      const file = document.getElementById('csvFile').files[0];
+      const token = localStorage.getItem('apiToken');
+      const endpoint = localStorage.getItem('apiEndpoint');
+      const externalKey = localStorage.getItem('externalKey');
+      const isClosed = document.getElementById('isClosed').checked;
+      const type = typeEl.value;
+      const text = document.getElementById('messageText').value.trim();
+      const imageUrl = document.getElementById('imageUrl').value.trim();
+      const interval = parseInt(document.getElementById('intervalSeconds').value, 10) || 0;
+      if (!file || !text || (type==='image_text' && !imageUrl)) {
+        return alert('Preencha todos campos.');
+      }
+      Papa.parse(file, { header:false, skipEmptyLines:true,
+        complete(res){ const nums = res.data.map(r=>Array.isArray(r)?r[0].trim():r.trim()).filter(n=>n); sendAll(nums, token, endpoint, externalKey, isClosed, type, text, imageUrl, interval); },
+        error(e){ alert('Erro CSV: '+e.message); }
+      });
+    });
+
+    async function sendAll(nums, token, endpoint, externalKey, isClosed, type, text, imageUrl, interval) {
+      for(let i=0;i<nums.length;i++){
+        await sendMsg(nums[i], token, endpoint, externalKey, isClosed, type, text, imageUrl);
+        if(interval>0 && i<nums.length-1) await new Promise(r=>setTimeout(r, interval*1000));
+      }
+    }
+
+    async function sendMsg(number, token, endpoint, externalKey, isClosed, type, text, imageUrl) {
+      let entry=`[${number}]->`;
+      const url = type==='text'?endpoint:`${endpoint}/url`;
+      const payload={number,externalKey,isClosed,body:text};
+      if(type==='image_text') payload.mediaUrl=imageUrl;
+      try{
+        const resp=await fetch(url,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const result=await resp.json();
+        entry+=(result.success||resp.ok)?'Enviado':'Erro:'+JSON.stringify(result);
+      }catch(e){entry+='Falha:'+e.message;}
+      document.getElementById('log').textContent+=entry+'\n';
+    }
+  </script>
+</body>
+</html>
