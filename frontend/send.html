@@ -1,133 +1,93 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Envio – Disparo WhatsApp</title>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Envio - Disparo WhatsApp</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     .hidden { display: none; }
+    .inline-label { display: flex; align-items: center; margin-top: 10px; }
+    .inline-label span { margin-right: 8px; }
+    .inline-label input[type="checkbox"] { width: auto; }
     label { display: block; margin-top: 10px; font-weight: bold; }
     input, textarea, select, button { width: 100%; padding: 8px; margin-top: 4px; }
     button { width: auto; cursor: pointer; }
     #log { background: #f4f4f4; padding: 10px; height: 200px; overflow-y: auto; white-space: pre-wrap; margin-top: 20px; }
-    .inline-label { display: flex; align-items: center; margin-top: 10px; }
-    .inline-label span { margin-right: 8px; }
-    .inline-label input[type="checkbox"] { width: auto; margin: 0; }
   </style>
 </head>
 <body>
-  <h1>Envio – Disparo WhatsApp</h1>
-
+  <h1>Envio - Disparo WhatsApp</h1>
   <div id="login">
     <label for="loginPwd">Senha:</label>
-    <input type="password" id="loginPwd" placeholder="Digite sua senha">
+    <input type="password" id="loginPwd" placeholder="Senha">
     <button id="doLogin">Entrar</button>
     <div id="loginMsg" style="color:red; margin-top:10px;"></div>
   </div>
-
   <div id="main" class="hidden">
-    <label class="inline-label">
+    <div class="inline-label">
       <span>Fechar conversa (isClosed):</span>
       <input type="checkbox" id="isClosed">
-    </label>
-
+    </div>
     <label for="csvFile">Importar CSV:</label>
     <input type="file" id="csvFile" accept=".csv">
-
     <label for="messageType">Tipo de envio:</label>
     <select id="messageType">
       <option value="text">Somente Texto</option>
       <option value="image_text">Texto + Imagem via URL</option>
     </select>
-
-    <!-- Agora o campo sempre aparece -->
-    <label id="labelText" for="messageText">Texto da Mensagem:</label>
-    <textarea id="messageText" rows="4" placeholder="Digite sua mensagem aqui"></textarea>
-
+    <label for="messageText" id="labelText">Texto da Mensagem:</label>
+    <textarea id="messageText" rows="4" placeholder="Digite sua mensagem"></textarea>
     <div id="divImage" class="hidden">
       <label for="imageUrl">URL da Imagem:</label>
       <input type="url" id="imageUrl" placeholder="https://exemplo.com/imagem.png">
     </div>
-
     <label for="intervalSeconds">Intervalo (segundos):</label>
     <input type="number" id="intervalSeconds" min="0" value="0">
-
     <button id="sendBtn">Enviar</button>
-
     <pre id="log"></pre>
   </div>
-
   <script>
     const apiUrl = 'http://localhost:3000';
-
-    if (!localStorage.getItem('apiToken')) {
-      window.location.href = 'config.html';
-    }
-
-    // Login
+    if (!localStorage.getItem('apiToken')) window.location.href='config.html';
     document.getElementById('doLogin').onclick = () => {
       if (document.getElementById('loginPwd').value === localStorage.getItem('accessPwd')) {
         document.getElementById('login').classList.add('hidden');
         document.getElementById('main').classList.remove('hidden');
-      } else {
-        document.getElementById('loginMsg').textContent = 'Senha incorreta';
-      }
+      } else document.getElementById('loginMsg').textContent='Senha incorreta';
     };
-
-    // Exibe ou oculta campo de imagem
     document.getElementById('messageType').onchange = () => {
-      const imgDiv = document.getElementById('divImage');
-      const lbl = document.getElementById('labelText');
-      if (document.getElementById('messageType').value === 'text') {
-        imgDiv.classList.add('hidden');
-        lbl.textContent = 'Texto da Mensagem:';
+      const imgDiv=document.getElementById('divImage');
+      const lbl=document.getElementById('labelText');
+      if(document.getElementById('messageType').value==='text'){
+        imgDiv.classList.add('hidden'); lbl.textContent='Texto da Mensagem:';
       } else {
-        imgDiv.classList.remove('hidden');
-        lbl.textContent = 'Texto + Legenda:';
+        imgDiv.classList.remove('hidden'); lbl.textContent='Texto + Legenda:';
       }
     };
-
-    // Envio
     document.getElementById('sendBtn').onclick = () => {
-      const file = document.getElementById('csvFile').files[0];
-      if (!file) return alert('Selecione um CSV');
-      Papa.parse(file, {
-        header: false,
-        skipEmptyLines: true,
-        complete(r) {
-          fetch(apiUrl + '/dispatch', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              numbers: r.data.map(x => Array.isArray(x) ? x[0].trim() : x.trim()).filter(x => x),
-              token: localStorage.getItem('apiToken'),
-              endpoint: localStorage.getItem('apiEndpoint'),
-              externalKey: localStorage.getItem('externalKey'),
-              isClosed: document.getElementById('isClosed').checked,
-              messageType: document.getElementById('messageType').value,
-              messageText: document.getElementById('messageText').value,
-              imageUrl: document.getElementById('imageUrl').value,
-              intervalSeconds: parseInt(document.getElementById('intervalSeconds').value, 10) || 0
-            })
-          })
-          .then(res => res.json())
-          .then(job => {
-            const logEl = document.getElementById('log');
-            logEl.textContent = 'Job ' + job.jobId + ' iniciado';
-            setInterval(() => {
-              fetch(apiUrl + '/jobs/' + job.jobId)
-                .then(r => r.json())
-                .then(data => {
-                  logEl.textContent = data.logs
-                    .map(l => `[${l.number}] -> ${l.success ? 'OK' : 'ERR'}`)
-                    .join('\n');
-                });
-            }, 1000);
-          });
-        }
-      });
+      const file=document.getElementById('csvFile').files[0];
+      if(!file) return alert('Selecione um CSV');
+      Papa.parse(file,{header:false,skipEmptyLines:true,complete(r){
+        fetch(apiUrl+'/dispatch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+          numbers:r.data.map(x=>Array.isArray(x)?x[0].trim():x.trim()).filter(x=>x),
+          token:localStorage.getItem('apiToken'),
+          endpoint:localStorage.getItem('apiEndpoint'),
+          externalKey:localStorage.getItem('externalKey'),
+          isClosed:document.getElementById('isClosed').checked,
+          messageType:document.getElementById('messageType').value,
+          messageText:document.getElementById('messageText').value,
+          imageUrl:document.getElementById('imageUrl').value,
+          intervalSeconds:parseInt(document.getElementById('intervalSeconds').value,10)||0
+        })})
+        .then(res=>res.json()).then(job=>{
+          const logEl=document.getElementById('log');
+          logEl.textContent='Job '+job.jobId+' iniciado';
+          setInterval(()=>fetch(apiUrl+'/jobs/'+job.jobId).then(r=>r.json()).then(data=>{
+            logEl.textContent=data.logs.map(l=>`[${l.number}] -> ${l.success?'OK':'ERR'}`).join('\n');
+          }),1000);
+        });
+      }});
     };
   </script>
 </body>

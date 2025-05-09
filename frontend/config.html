@@ -8,19 +8,19 @@
     body { font-family: Arial, sans-serif; margin: 20px; }
     label { display: block; margin-top: 10px; font-weight: bold; }
     input { width: 100%; padding: 8px; margin-top: 4px; }
-    button { margin-top: 15px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    button { margin-top: 15px; padding: 10px 20px; cursor: pointer; }
   </style>
 </head>
 <body>
   <h1>Configurações - Disparo WhatsApp</h1>
   <label for="cfgToken">Token da API (Bearer):</label>
-  <input type="text" id="cfgToken" placeholder="Insira seu JWT">
+  <input type="text" id="cfgToken" placeholder="JWT">
   <label for="cfgEndpoint">URL da API (sem /url):</label>
-  <input type="text" id="cfgEndpoint" placeholder="https://api.mychatbot.com.br/v2/api/external/ID">
+  <input type="text" id="cfgEndpoint" placeholder="https://api...">
   <label for="cfgExternalKey">Chave Externa (externalKey):</label>
-  <input type="text" id="cfgExternalKey" placeholder="ID_UNICA_DO_SISTEMA_CLIENTE">
+  <input type="text" id="cfgExternalKey" placeholder="externalKey">
   <label for="cfgPassword">Senha de acesso:</label>
-  <input type="password" id="cfgPassword" placeholder="Defina uma senha">
+  <input type="password" id="cfgPassword" placeholder="Senha">
   <button id="saveBtn">Salvar Configurações</button>
   <script>
     document.getElementById('saveBtn').onclick = () => {
