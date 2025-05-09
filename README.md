@@ -1,8 +1,17 @@
 # Disparo WhatsApp - MyChatBot
 
 ## Estrutura
-frontend/, backend/, docker-compose.yml, docker-stack.yml
 
-## Uso
-- docker-compose up -d
-- ou Swarm via docker-stack.yml no Portainer (pull ON)
+```
+frontend/
+backend/
+docker-compose.yml
+docker-stack.yml
+.gitignore
+README.md
+```
+
+## Deploy
+
+- **Compose**: `docker-compose up -d`
+- **Swarm**: usar `docker-stack.yml` via Portainer (path `docker-stack.yml`, pull ON)

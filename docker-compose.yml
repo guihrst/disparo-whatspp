@@ -1,10 +1,10 @@
-version:'3.7'
+version: "3.7"
 services:
   frontend:
-    build: 
+    build:
       context: .
       dockerfile: frontend/Dockerfile.frontend
-    ports: 
+    ports:
       - "8080:80"
   backend:
     build:
