@@ -15,18 +15,13 @@
   <h1>Configurações - Disparo WhatsApp</h1>
   <label for="cfgToken">Token da API (Bearer):</label>
   <input type="text" id="cfgToken" placeholder="Insira seu JWT">
-  
   <label for="cfgEndpoint">URL da API (sem /url):</label>
   <input type="text" id="cfgEndpoint" placeholder="https://api.mychatbot.com.br/v2/api/external/ID">
-  
   <label for="cfgExternalKey">Chave Externa (externalKey):</label>
   <input type="text" id="cfgExternalKey" placeholder="ID_UNICA_DO_SISTEMA_CLIENTE">
-  
   <label for="cfgPassword">Senha de acesso:</label>
   <input type="password" id="cfgPassword" placeholder="Defina uma senha">
-  
   <button id="saveBtn">Salvar Configurações</button>
-  
   <script>
     document.getElementById('saveBtn').onclick = () => {
       const t = document.getElementById('cfgToken').value.trim();
