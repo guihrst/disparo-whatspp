@@ -2,26 +2,31 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Configuração - Disparo WhatsApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configurações - Disparo WhatsApp</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     label { display: block; margin-top: 10px; font-weight: bold; }
     input { width: 100%; padding: 8px; margin-top: 4px; }
-    button { margin-top: 15px; padding: 10px 20px; font-size: 16px; }
+    button { margin-top: 15px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
   </style>
 </head>
 <body>
   <h1>Configurações - Disparo WhatsApp</h1>
-  <label for="cfgToken">Token da API (Bearer)</label>
+  <label for="cfgToken">Token da API (Bearer):</label>
   <input type="text" id="cfgToken" placeholder="Insira seu JWT">
-  <label for="cfgEndpoint">URL da API (sem /url)</label>
+  
+  <label for="cfgEndpoint">URL da API (sem /url):</label>
   <input type="text" id="cfgEndpoint" placeholder="https://api.mychatbot.com.br/v2/api/external/ID">
-  <label for="cfgExternalKey">Chave Externa (externalKey)</label>
+  
+  <label for="cfgExternalKey">Chave Externa (externalKey):</label>
   <input type="text" id="cfgExternalKey" placeholder="ID_UNICA_DO_SISTEMA_CLIENTE">
-  <label for="cfgPassword">Senha de acesso</label>
+  
+  <label for="cfgPassword">Senha de acesso:</label>
   <input type="password" id="cfgPassword" placeholder="Defina uma senha">
-  <button id="saveBtn">Salvar e ir para envio</button>
+  
+  <button id="saveBtn">Salvar Configurações</button>
+  
   <script>
     document.getElementById('saveBtn').addEventListener('click', () => {
       const token = document.getElementById('cfgToken').value.trim();
@@ -35,6 +40,7 @@
       localStorage.setItem('apiEndpoint', endpoint.replace(/\/+$/, ''));
       localStorage.setItem('externalKey', externalKey);
       localStorage.setItem('accessPwd', pwd);
+      alert('Configurações salvas! Agora você pode ir para a página de envio.');
       window.location.href = 'send.html';
     });
   </script>

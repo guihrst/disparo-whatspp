@@ -1,17 +1,19 @@
 # Disparo WhatsApp - MyChatBot
 
-Separação de páginas: **config.html** e **send.html**.
+Split de Configuração e Envio de páginas estáticas.
+
+## Arquivos
+- config.html
+- send.html
+- default.conf
+- Dockerfile
+- docker-compose.yml
+- docker-stack.yml
+- .gitignore
+- README.md
 
 ## Como usar
-
-1. Acesse `config.html` para definir as credenciais e salvar.  
-2. Depois você será redirecionado a `send.html` para login e envio.  
-
-### Deploy no Portainer
-
-- Git repo: https://github.com/guihrst/disparo-whatspp.git
-- Branch: main
-- Compose path: docker-stack.yml
-- Build local com Dockerfile e `docker-compose.yml` se preferir.
-
-***
+1. Faça upload destes arquivos no GitHub.  
+2. Deploy via Portainer: Git repo, branch main, path docker-stack.yml.  
+3. Publique a imagem no Docker Hub (usuário `guihorst`).  
+4. Update the stack.
