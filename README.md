@@ -1,10 +1,11 @@
 # Disparo WhatsApp - MyChatBot
 
-Correção para docker-stack.yml sem opções não suportadas e usando imagem do registry.
+Correções finais: compose e stack para Portainer.
 
 ## Deploy (Swarm)
 - Stacks → Add stack
-- Git repo: https://github.com/guihrst/disparo-whatspp.git
-- Branch: main
-- Compose path: docker-stack.yml
+- Git: guihrst/disparo-whatspp.git, branch main, path docker-stack.yml
 - Pull latest image ON
+
+## Deploy manual
+docker-compose up -d
