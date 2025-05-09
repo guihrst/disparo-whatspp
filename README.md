@@ -29,68 +29,33 @@ dist/
 ---
 
 ## 🚀 Publicação no GitHub
-*(local ou via UI Web)*
+
+Você pode adicionar os arquivos pelo site ou localmente:
+
+### Via Interface Web (sem Git local)
+1. Acesse o repo: `https://github.com/guihrst/disparo-whatspp`.  
+2. Clique em **Add file → Upload files**.  
+3. Faça upload de:
+   - `index.html`  
+   - `Dockerfile`  
+   - `docker-compose.yml`  
+   - `docker-stack.yml`  
+   - `.gitignore`  
+   - `README.md`  
+4. Commit com mensagem `Adicionar arquivos iniciais`.
+
+### Via Git Local
+```bash
+git clone https://github.com/guihrst/disparo-whatspp.git
+cd disparo-whatspp
+# Copie seus arquivos para a pasta
+git add .
+git commit -m "Inicializa projeto Disparo WhatsApp"
+git push origin main
+```
 
 ---
 
 ## 📦 Publicação de Imagem no Registry
 
-```bash
-docker build -t seu-usuario/disparo-whatspp:latest .
-docker push seu-usuario/disparo-whatspp:latest
-```
-
----
-
-## 📑 `docker-compose.yml` (Desenvolvimento Local)
-
-```yaml
-version: '3.7'
-services:
-  disparo_whatsapp:
-    build: .
-    ports:
-      - "8080:80"
-```
-
----
-
-## 📑 `docker-stack.yml` (Swarm / Portainer)
-
-```yaml
-version: '3.7'
-services:
-  disparo_whatsapp:
-    image: seu-usuario/disparo-whatspp:latest
-    ports:
-      - target: 80
-        published: 8080
-        protocol: tcp
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-```
-
----
-
-## 🚩 Deploy no Portainer (Swarm)
-
-1. **Stacks** → **Add stack**  
-2. **Git repository**, URL: https://github.com/guihrst/disparo-whatspp.git  
-3. Branch: `main`  
-4. Compose path: `docker-stack.yml`  
-5. **Pull the latest image** ligado  
-6. **Deploy the stack**  
-
----
-
-## ✨ Deploy Manual (não-Swarm)
-
-```bash
-docker-compose up -d
-```
-
----
-
-Acesse `http://<IP-da-VPS>:8080` após o deploy.
+... (conteúdo completo conforme canvas README)
