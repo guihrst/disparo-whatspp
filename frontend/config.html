@@ -14,13 +14,13 @@
 <body>
   <h1>Configurações - Disparo WhatsApp</h1>
   <label for="cfgToken">Token da API (Bearer):</label>
-  <input type="text" id="cfgToken" placeholder="JWT">
+  <input type="text" id="cfgToken" placeholder="Digite seu JWT">
   <label for="cfgEndpoint">URL da API (sem /url):</label>
-  <input type="text" id="cfgEndpoint" placeholder="https://api...">
+  <input type="text" id="cfgEndpoint" placeholder="https://api.exemplo.com.br/v2/api/external/ID">
   <label for="cfgExternalKey">Chave Externa (externalKey):</label>
-  <input type="text" id="cfgExternalKey" placeholder="externalKey">
+  <input type="text" id="cfgExternalKey" placeholder="Chave Externa">
   <label for="cfgPassword">Senha de acesso:</label>
-  <input type="password" id="cfgPassword" placeholder="Senha">
+  <input type="password" id="cfgPassword" placeholder="Defina uma senha">
   <button id="saveBtn">Salvar Configurações</button>
   <script>
     document.getElementById('saveBtn').onclick = () => {
@@ -28,7 +28,10 @@
       const e = document.getElementById('cfgEndpoint').value.trim();
       const k = document.getElementById('cfgExternalKey').value.trim();
       const p = document.getElementById('cfgPassword').value;
-      if (!t || !e || !k || !p) return alert('Preencha todos os campos.');
+      if (!t || !e || !k || !p) {
+        alert('Todos os campos são obrigatórios.');
+        return;
+      }
       localStorage.setItem('apiToken', t);
       localStorage.setItem('apiEndpoint', e.replace(/\/+$/, ''));
       localStorage.setItem('externalKey', k);
