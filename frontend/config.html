@@ -15,22 +15,25 @@
   <h1>Configurações - Disparo WhatsApp</h1>
   <label for="cfgToken">Token da API (Bearer):</label>
   <input type="text" id="cfgToken" placeholder="Digite seu JWT">
+  
   <label for="cfgEndpoint">URL da API (sem /url):</label>
-  <input type="text" id="cfgEndpoint" placeholder="https://api.exemplo.com.br/v2/api/external/ID">
+  <input type="text" id="cfgEndpoint" placeholder="https://api.mychatbot.awti.com.br/v2/api/external/ID">
+  
   <label for="cfgExternalKey">Chave Externa (externalKey):</label>
   <input type="text" id="cfgExternalKey" placeholder="Chave Externa">
+  
   <label for="cfgPassword">Senha de acesso:</label>
   <input type="password" id="cfgPassword" placeholder="Defina uma senha">
+  
   <label for="cfgBackendUrl">URL do Backend de Dispatch:</label>
   <input type="text" id="cfgBackendUrl" placeholder="http://localhost:3000">
+  
   <button id="saveBtn">Salvar Configurações</button>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Prefill fields from localStorage if available
-      const token = localStorage.getItem('apiToken');
-      if (token) {
-        document.getElementById('cfgToken').value = token;
+    window.addEventListener('DOMContentLoaded', () => {
+      if (localStorage.getItem('apiToken')) {
+        document.getElementById('cfgToken').value = localStorage.getItem('apiToken');
         document.getElementById('cfgEndpoint').value = localStorage.getItem('apiEndpoint') || '';
         document.getElementById('cfgExternalKey').value = localStorage.getItem('externalKey') || '';
         document.getElementById('cfgPassword').value = localStorage.getItem('accessPwd') || '';
@@ -51,11 +54,10 @@
       }
 
       localStorage.setItem('apiToken', t);
-      // Remove trailing slashes
-      localStorage.setItem('apiEndpoint', e.replace(/\/+$|\/$/, ''));
+      localStorage.setItem('apiEndpoint', e.replace(/\/+$/, ''));
       localStorage.setItem('externalKey', k);
       localStorage.setItem('accessPwd', p);
-      localStorage.setItem('backendUrl', b.replace(/\/+$|\/$/, ''));
+      localStorage.setItem('backendUrl', b.replace(/\/+$/, ''));
 
       alert('Configurações salvas com sucesso!');
       window.location.href = 'send.html';

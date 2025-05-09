@@ -30,19 +30,24 @@
     </div>
     <label for="csvFile">Importar CSV:</label>
     <input type="file" id="csvFile" accept=".csv">
+
     <label for="messageType">Tipo de envio:</label>
     <select id="messageType">
       <option value="text">Somente Texto</option>
       <option value="image_text">Texto + Imagem</option>
     </select>
-    <label for="messageText" id="labelText">Texto da Mensagem:</label>
+
+    <label id="labelText" for="messageText">Texto da Mensagem:</label>
     <textarea id="messageText" rows="4" placeholder="Digite sua mensagem"></textarea>
+
     <div id="divImage" class="hidden">
       <label for="imageUrl">URL da Imagem:</label>
       <input type="url" id="imageUrl" placeholder="https://exemplo.com/imagem.png">
     </div>
+
     <label for="intervalSeconds">Intervalo (segundos):</label>
     <input type="number" id="intervalSeconds" min="0" value="0">
+
     <button id="sendBtn">Enviar</button>
     <pre id="log"></pre>
   </div>
@@ -63,7 +68,7 @@
         const lbl = document.getElementById('labelText');
         if (typeEl.value === 'text') {
           imgDiv.classList.add('hidden');
-          lbl.textContent = 'Texto da Mensagem:';  
+          lbl.textContent = 'Texto da Mensagem:';
         } else {
           imgDiv.classList.remove('hidden');
           lbl.textContent = 'Texto + Legenda:';  
@@ -119,8 +124,7 @@
               fetch(`${backendUrl}/jobs/${jobId}`)
                 .then(r => r.json())
                 .then(data => {
-                  logEl.textContent = data.logs.map(l => `[${l.number}] -> ${l.success ? 'OK' : 'ERR: ' + (l.error||'fail')}`) 
-                                     .join('\n');
+                  logEl.textContent = data.logs.map(l => `[${l.number}] -> ${l.success ? 'OK' : 'ERR: ' + (l.error||'fail')}]`).join('\n');
                 });
             }, 1000);
           });
