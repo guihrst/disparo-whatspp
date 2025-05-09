@@ -42,7 +42,7 @@
       <option value="image_text">Texto + Imagem via URL</option>
     </select>
 
-    <!-- Campo de texto sempre visível -->
+    <!-- Agora o campo sempre aparece -->
     <label id="labelText" for="messageText">Texto da Mensagem:</label>
     <textarea id="messageText" rows="4" placeholder="Digite sua mensagem aqui"></textarea>
 
@@ -61,8 +61,7 @@
 
   <script>
     const apiUrl = 'http://localhost:3000';
-    
-    // Se não configurou, volta para config
+
     if (!localStorage.getItem('apiToken')) {
       window.location.href = 'config.html';
     }
@@ -77,22 +76,23 @@
       }
     };
 
-    // Mostrar/ocultar campo de imagem
+    // Exibe ou oculta campo de imagem
     document.getElementById('messageType').onchange = () => {
-      const div = document.getElementById('divImage');
-      const label = document.getElementById('labelText');
+      const imgDiv = document.getElementById('divImage');
+      const lbl = document.getElementById('labelText');
       if (document.getElementById('messageType').value === 'text') {
-        div.classList.add('hidden');
-        label.textContent = 'Texto da Mensagem:';
+        imgDiv.classList.add('hidden');
+        lbl.textContent = 'Texto da Mensagem:';
       } else {
-        div.classList.remove('hidden');
-        label.textContent = 'Texto + Legenda:';
+        imgDiv.classList.remove('hidden');
+        lbl.textContent = 'Texto + Legenda:';
       }
     };
 
     // Envio
     document.getElementById('sendBtn').onclick = () => {
       const file = document.getElementById('csvFile').files[0];
+      if (!file) return alert('Selecione um CSV');
       Papa.parse(file, {
         header: false,
         skipEmptyLines: true,
@@ -122,7 +122,7 @@
                 .then(data => {
                   logEl.textContent = data.logs
                     .map(l => `[${l.number}] -> ${l.success ? 'OK' : 'ERR'}`)
-                    .join('\\n');
+                    .join('\n');
                 });
             }, 1000);
           });
