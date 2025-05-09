@@ -18,120 +18,90 @@
 </head>
 <body>
   <h1>Envio - Disparo WhatsApp</h1>
-  
   <div id="login">
     <label for="loginPwd">Senha:</label>
     <input type="password" id="loginPwd" placeholder="Digite sua senha">
     <button id="doLogin">Entrar</button>
     <div id="loginMsg" style="color:red; margin-top:10px;"></div>
   </div>
-  
   <div id="main" class="hidden">
     <label class="inline-label">
-      <span>Fechar conversa (isClosed):</span>
+      <span>Fechar conversa:</span>
       <input type="checkbox" id="isClosed">
     </label>
-    
-    <label for="csvFile">Importar CSV (números 55+DDD+Número):</label>
+    <label for="csvFile">Importar CSV:</label>
     <input type="file" id="csvFile" accept=".csv">
-    
     <label for="messageType">Tipo de envio:</label>
     <select id="messageType">
       <option value="text">Somente Texto</option>
       <option value="image_text">Texto + Imagem via URL</option>
     </select>
-    
     <label id="labelText" for="messageText">Texto da Mensagem:</label>
     <textarea id="messageText" rows="4"></textarea>
-    
     <div id="divImage" class="hidden">
       <label for="imageUrl">URL da Imagem:</label>
       <input type="url" id="imageUrl">
     </div>
-    
     <label for="intervalSeconds">Intervalo (segundos):</label>
     <input type="number" id="intervalSeconds" min="0" value="0">
-    
     <button id="sendBtn">Enviar</button>
-    
     <pre id="log"></pre>
   </div>
-  
   <script>
     if (!localStorage.getItem('apiToken')) {
-      alert('Configurações não encontradas. Você será redirecionado.');
+      alert('Configurações faltando.');
       window.location.href = 'config.html';
     }
-    const loginDiv = document.getElementById('login');
-    const mainDiv = document.getElementById('main');
     document.getElementById('doLogin').addEventListener('click', () => {
-      const pwd = document.getElementById('loginPwd').value;
-      if (pwd === localStorage.getItem('accessPwd')) {
-        loginDiv.classList.add('hidden');
-        mainDiv.classList.remove('hidden');
+      if (document.getElementById('loginPwd').value === localStorage.getItem('accessPwd')) {
+        document.getElementById('login').classList.add('hidden');
+        document.getElementById('main').classList.remove('hidden');
       } else {
         document.getElementById('loginMsg').textContent = 'Senha incorreta.';
       }
     });
-    
-    const typeEl = document.getElementById('messageType');
-    const divImage = document.getElementById('divImage');
-    const labelText = document.getElementById('labelText');
-    typeEl.addEventListener('change', () => {
-      if (typeEl.value === 'text') {
-        divImage.classList.add('hidden');
-        labelText.textContent = 'Texto da Mensagem:';
+    document.getElementById('messageType').addEventListener('change', () => {
+      const div = document.getElementById('divImage');
+      const label = document.getElementById('labelText');
+      if (document.getElementById('messageType').value === 'text') {
+        div.classList.add('hidden');
+        label.textContent = 'Texto da Mensagem:';
       } else {
-        divImage.classList.remove('hidden');
-        labelText.textContent = 'Texto + Legenda:';
+        div.classList.remove('hidden');
+        label.textContent = 'Texto + Legenda:';
       }
     });
-    
-    function sendMsg(number, payload) {
-      let logEntry = `[${number}] -> `;
-      fetch(payload.url, {
-        method: 'POST',
-        headers: {'Authorization': 'Bearer ' + payload.token, 'Content-Type': 'application/json'},
-        body: JSON.stringify(payload.body)
-      })
-      .then(res => res.json().then(result => {
-        logEntry += (result.success || res.ok) ? 'Enviado' : 'Erro: ' + JSON.stringify(result);
-        document.getElementById('log').textContent += logEntry + '\n';
-      }))
-      .catch(err => {
-        logEntry += 'Falha: ' + err.message;
-        document.getElementById('log').textContent += logEntry + '\n';
-      });
-    }
-    
-    function sendAll() {
+    document.getElementById('sendBtn').addEventListener('click', () => {
       const file = document.getElementById('csvFile').files[0];
       const token = localStorage.getItem('apiToken');
       const endpoint = localStorage.getItem('apiEndpoint').replace(/\/+$/, '');
       const externalKey = localStorage.getItem('externalKey');
       const isClosed = document.getElementById('isClosed').checked;
-      const type = typeEl.value;
+      const type = document.getElementById('messageType').value;
       const text = document.getElementById('messageText').value.trim();
       const imageUrl = document.getElementById('imageUrl').value.trim();
-      const interval = parseInt(document.getElementById('intervalSeconds').value, 10) || 0;
-      
+      const interval = parseInt(document.getElementById('intervalSeconds').value,10)||0;
       Papa.parse(file, {
-        header: false, skipEmptyLines: true,
+        header:false, skipEmptyLines:true,
         complete(results) {
-          const numbers = results.data.map(r => Array.isArray(r) ? r[0].trim() : r.trim()).filter(n => n);
-          numbers.reduce((p, number, idx) => p.then(() => new Promise(resolve => {
-            sendMsg(number, {
-              url: type === 'text' ? endpoint : endpoint + '/url',
-              token,
-              body: { number, externalKey, isClosed, body: text, ...(type === 'image_text' && { mediaUrl: imageUrl }) }
-            });
-            setTimeout(resolve, interval * 1000);
-          })), Promise.resolve());
+          results.data.forEach((r,i) => {
+            const number = Array.isArray(r)?r[0].trim():r.trim();
+            setTimeout(() => {
+              fetch(type==='text'?endpoint:endpoint+'/url', {
+                method:'POST',
+                headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+                body:JSON.stringify({number,externalKey,isClosed,body:text, ...(type==='image_text'&&{mediaUrl:imageUrl})})
+              }).then(res=>res.json()).then(result=>{
+                document.getElementById('log').textContent+=`[${number}] -> ${result.success||res.ok?'Enviado':'Erro:'+JSON.stringify(result)}\n`;
+              }).catch(err=>{
+                document.getElementById('log').textContent+=`[${number}] -> Falha: ${err.message}\n`;
+              });
+            }, i*interval*1000);
+          });
         },
-        error(e) { alert('Erro ao processar CSV: ' + e.message); }
+        error(e){alert('Erro CSV: '+e.message);}
       });
-    }
-    document.getElementById('sendBtn').addEventListener('click', sendAll);
+    });
   </script>
 </body>
 </html>

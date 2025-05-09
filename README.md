@@ -1,19 +1,10 @@
 # Disparo WhatsApp - MyChatBot
 
-Split de Configuração e Envio de páginas estáticas.
+Split de Configuração e Envio com Nginx:
 
-## Arquivos
-- config.html
-- send.html
-- default.conf
-- Dockerfile
-- docker-compose.yml
-- docker-stack.yml
-- .gitignore
-- README.md
+- **config.html**: define configurações.
+- **send.html**: realiza envios.
+- **default.conf**: configura Nginx para servir config.html como index.
 
-## Como usar
-1. Faça upload destes arquivos no GitHub.  
-2. Deploy via Portainer: Git repo, branch main, path docker-stack.yml.  
-3. Publique a imagem no Docker Hub (usuário `guihorst`).  
-4. Update the stack.
+**Dev**: docker-compose up -d  
+**Swarm**: use docker-stack.yml via Portainer (pull ON, user guihorst/disparo-whatspp:latest)
