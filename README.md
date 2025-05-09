@@ -11,16 +11,16 @@ docker-stack.yml
 README.md
 ```
 
-## Como Executar
+## Execução
 
 ### Docker Compose
 ```bash
 docker-compose up -d
 ```
-- Frontend: http://localhost:8080  
-- Backend: http://localhost:3000  
+- Frontend: http://localhost:8080
+- Backend: http://localhost:3000
 
-### Docker Swarm (Portainer)
-1. Adicione Stack via Git (branch main).  
-2. Compose path: `docker-stack.yml`  
-3. Pull ON, Deploy.  
+### Docker Swarm
+- Git repo: branch main
+- Compose path: docker-stack.yml
+- Pull ON, Deploy

@@ -23,7 +23,6 @@ async function sendNext(jobId) {
   const url = job.messageType === 'text' ? job.endpoint : `${job.endpoint}/url`;
   const body = { number, externalKey: job.externalKey, isClosed: job.isClosed, body: job.messageText };
   if (job.messageType === 'image_text') body.mediaUrl = job.imageUrl;
-
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -31,9 +30,7 @@ async function sendNext(jobId) {
       body: JSON.stringify(body)
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(data.error || data.message || `Status ${res.status}`);
-    }
+    if (!res.ok) throw new Error(data.error || data.message || `Status ${res.status}`);
     job.logs.push({ number, success: true });
   } catch (err) {
     job.logs.push({ number, success: false, error: err.message });

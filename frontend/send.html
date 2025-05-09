@@ -71,10 +71,10 @@
         const lbl = document.getElementById('labelText');
         if (typeEl.value === 'text') {
           imgDiv.classList.add('hidden');
-          lbl.textContent = 'Texto da Mensagem:';
+          lbl.textContent = 'Texto da Mensagem:';  
         } else {
           imgDiv.classList.remove('hidden');
-          lbl.textContent = 'Texto + Legenda:';
+          lbl.textContent = 'Texto + Legenda:';  
         }
       }
       typeEl.addEventListener('change', toggleImage);
@@ -104,31 +104,31 @@
       Papa.parse(file, {
         header: false, skipEmptyLines: true,
         complete(results) {
-          fetch(\`\${backendUrl}/dispatch\`, {
+          const payload = {
+            numbers: results.data.map(r => Array.isArray(r) ? r[0].trim() : r.trim()).filter(n => n),
+            token: localStorage.getItem('apiToken'),
+            endpoint: localStorage.getItem('apiEndpoint'),
+            externalKey: localStorage.getItem('externalKey'),
+            isClosed: document.getElementById('isClosed').checked,
+            messageType: document.getElementById('messageType').value,
+            messageText: document.getElementById('messageText').value,
+            imageUrl: document.getElementById('imageUrl').value,
+            intervalSeconds: parseInt(document.getElementById('intervalSeconds').value, 10) || 0
+          };
+          fetch(`${backendUrl}/dispatch`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-              numbers: results.data.map(r => Array.isArray(r)?r[0].trim():r.trim()).filter(n=>n),
-              token: localStorage.getItem('apiToken'),
-              endpoint: localStorage.getItem('apiEndpoint'),
-              externalKey: localStorage.getItem('externalKey'),
-              isClosed: document.getElementById('isClosed').checked,
-              messageType: document.getElementById('messageType').value,
-              messageText: document.getElementById('messageText').value,
-              imageUrl: document.getElementById('imageUrl').value,
-              intervalSeconds: parseInt(document.getElementById('intervalSeconds').value,10)||0
-            })
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
           })
           .then(r => r.json())
           .then(({ jobId }) => {
-            logEl.textContent = \`Job \${jobId} iniciado\n\`;
+            logEl.textContent = `Job ${jobId} iniciado
+`;
             setInterval(() => {
-              fetch(\`\${backendUrl}/jobs/\${jobId}\`)
+              fetch(`${backendUrl}/jobs/${jobId}`)
                 .then(r => r.json())
                 .then(data => {
-                  logEl.textContent = data.logs.map(l =>
-                    \`[\${l.number}] -> \${l.success ? 'OK' : 'ERR: ' + (l.error || 'unknown')}\`
-                  ).join('\n');
+                  logEl.textContent = data.logs.map(l => `[${l.number}] -> ${l.success ? 'OK' : 'ERR: ' + (l.error || 'fail')}]`).join('\n');
                 });
             }, 1000);
           });
