@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Envio - Disparo WhatsApp</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .hidden { display: none; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, textarea, select, button { width: 100%; padding: 8px; margin-top: 4px; }
+    button { width: auto; cursor: pointer; }
+    #log { background: #f4f4f4; padding: 10px; height: 200px; overflow-y: auto; margin-top: 20px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Envio - Disparo WhatsApp</h1>
+  <div id="login">
+    <label for="loginPwd">Senha:</label>
+    <input type="password" id="loginPwd" placeholder="Digite sua senha">
+    <button id="doLogin">Entrar</button>
+    <div id="loginMsg" style="color:red; margin-top:10px;"></div>
+  </div>
+  <div id="main" class="hidden">
+    <label><input type="checkbox" id="isClosed"> Fechar conversa</label>
+    <label>CSV:<input type="file" id="csvFile" accept=".csv"></label>
+    <label>Tipo:<select id="messageType"><option value="text">Texto</option><option value="image_text">Texto+Imagem</option></select></label>
+    <label id="labelText">Texto:<textarea id="messageText" rows="4"></textarea></label>
+    <div id="divImage" class="hidden"><label>URL Imagem:<input type="url" id="imageUrl"></label></div>
+    <label>Intervalo(s):<input type="number" id="intervalSeconds" value="0" min="0"></label>
+    <button id="sendBtn">Enviar</button>
+    <pre id="log"></pre>
+  </div>
+  <script>
+    const apiUrl = 'http://localhost:3000';
+    if (!localStorage.getItem('apiToken')) window.location.href = 'config.html';
+    document.getElementById('doLogin').onclick = () => {
+      if (document.getElementById('loginPwd').value === localStorage.getItem('accessPwd')) {
+        document.getElementById('login').classList.add('hidden');
+        document.getElementById('main').classList.remove('hidden');
+      } else {
+        document.getElementById('loginMsg').textContent = 'Senha incorreta';
+      }
+    };
+    document.getElementById('messageType').onchange = () => {
+      const div = document.getElementById('divImage');
+      document.getElementById('labelText').textContent =
+        document.getElementById('messageType').value === 'text' ? 'Texto:' : 'Texto + Legenda:';
+      div.classList.toggle('hidden', document.getElementById('messageType').value === 'text');
+    };
+    document.getElementById('sendBtn').onclick = () => {
+      const file = document.getElementById('csvFile').files[0];
+      Papa.parse(file, {
+        header: false, skipEmptyLines: true,
+        complete(r) {
+          fetch(apiUrl + '/dispatch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              numbers: r.data.map(x => Array.isArray(x) ? x[0].trim() : x.trim()).filter(x => x),
+              token: localStorage.getItem('apiToken'),
+              endpoint: localStorage.getItem('apiEndpoint'),
+              externalKey: localStorage.getItem('externalKey'),
+              isClosed: document.getElementById('isClosed').checked,
+              messageType: document.getElementById('messageType').value,
+              messageText: document.getElementById('messageText').value,
+              imageUrl: document.getElementById('imageUrl').value,
+              intervalSeconds: parseInt(document.getElementById('intervalSeconds').value, 10) || 0
+            })
+          })
+          .then(res => res.json())
+          .then(job => {
+            const logEl = document.getElementById('log');
+            logEl.textContent = 'Job ' + job.jobId + ' iniciado';
+            setInterval(() => {
+              fetch(apiUrl + '/jobs/' + job.jobId)
+                .then(r => r.json())
+                .then(data => {
+                  logEl.textContent = data.logs.map(l => `[${l.number}] -> ${l.success?'OK':'ERR'}`).join('\n');
+                });
+            }, 1000);
+          });
+        }
+      });
+    };
+  </script>
+</body>
+</html>
