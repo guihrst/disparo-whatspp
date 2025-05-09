@@ -91,10 +91,15 @@
                 method:'POST',
                 headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
                 body:JSON.stringify({number,externalKey,isClosed,body:text, ...(type==='image_text'&&{mediaUrl:imageUrl})})
-              }).then(res=>res.json()).then(result=>{
-                document.getElementById('log').textContent+=`[${number}] -> ${result.success||res.ok?'Enviado':'Erro:'+JSON.stringify(result)}\n`;
-              }).catch(err=>{
-                document.getElementById('log').textContent+=`[${number}] -> Falha: ${err.message}\n`;
+              })
+              .then(resp => {
+                const ok = resp.ok;
+                return resp.json().then(data => {
+                  document.getElementById('log').textContent += `[${number}] -> ${(data.success||ok)?'Enviado':'Erro:'+JSON.stringify(data)}\n`;
+                });
+              })
+              .catch(err => {
+                document.getElementById('log').textContent += `[${number}] -> Falha: ${err.message}\n`;
               });
             }, i*interval*1000);
           });
