@@ -5,9 +5,7 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 app.use(express.json());
-
 const jobs = {};
-
 app.post('/dispatch', (req, res) => {
   const {numbers, token, endpoint, externalKey, isClosed, messageType, messageText, imageUrl, intervalSeconds} = req.body;
   const jobId = uuidv4();
@@ -15,7 +13,6 @@ app.post('/dispatch', (req, res) => {
   setImmediate(() => sendNext(jobId));
   res.json({jobId});
 });
-
 function sendNext(jobId) {
   const job = jobs[jobId];
   if (job.currentIndex >= job.numbers.length) return;
@@ -25,10 +22,10 @@ function sendNext(jobId) {
   if (job.messageType === 'image_text') body.mediaUrl = job.imageUrl;
   fetch(url, {
     method: 'POST',
-    headers: {'Authorization': 'Bearer ' + job.token, 'Content-Type': 'application/json'},
+    headers: {'Authorization':'Bearer ' + job.token, 'Content-Type':'application/json'},
     body: JSON.stringify(body)
   })
-    .then(r => r.json().then(data => {
+    .then(res => res.json().then(data => {
       job.logs.push({number, success: !!data.success});
       job.currentIndex++;
       setTimeout(() => sendNext(jobId), job.intervalSeconds * 1000);
@@ -39,11 +36,9 @@ function sendNext(jobId) {
       setTimeout(() => sendNext(jobId), job.intervalSeconds * 1000);
     });
 }
-
 app.get('/jobs/:id', (req, res) => {
   const job = jobs[req.params.id];
-  if (!job) return res.status(404).json({error: 'Job not found'});
+  if (!job) return res.status(404).json({error:'not found'});
   res.json({logs: job.logs});
 });
-
-app.listen(3000, () => console.log('Backend listening on port 3000'));
+app.listen(3000, () => console.log('Backend running'));
