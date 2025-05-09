@@ -1,17 +1,17 @@
-version:'3.7'
+version: '3.7'
 services:
   disparo_whatsapp:
-    image:guihorst/disparo-whatspp:latest
+    image: guihorst/disparo-whatspp:latest
     logging:
-      driver:json-file
+      driver: json-file
       options:
-        max-size:"10m"
-        max-file:"3"
+        max-size: "10m"
+        max-file: "3"
     ports:
-      -target:80
-        published:8080
-        protocol:tcp
+      - target: 80
+        published: 8080
+        protocol: tcp
     deploy:
-      replicas:1
+      replicas: 1
       restart_policy:
-        condition:on-failure
+        condition: on-failure
