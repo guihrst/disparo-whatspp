@@ -9,7 +9,6 @@
     .hidden { display: none; }
     .inline-label { display: flex; align-items: center; margin-top: 10px; }
     .inline-label span { margin-right: 8px; }
-    .inline-label input[type="checkbox"] { width: auto; }
     label { display: block; margin-top: 10px; font-weight: bold; }
     input, textarea, select, button { width: 100%; padding: 8px; margin-top: 4px; }
     button { width: auto; cursor: pointer; }
@@ -19,7 +18,6 @@
 <body>
   <h1>Envio – Disparo WhatsApp</h1>
 
-  <!-- Tela de login -->
   <div id="login">
     <label for="loginPwd">Senha:</label>
     <input type="password" id="loginPwd" placeholder="Digite a senha configurada">
@@ -27,7 +25,6 @@
     <div id="loginMsg" style="color:red; margin-top:10px;"></div>
   </div>
 
-  <!-- Conteúdo principal -->
   <div id="main" class="hidden">
     <div class="inline-label">
       <span>Fechar conversa (isClosed):</span>
@@ -58,8 +55,6 @@
   </div>
 
   <script>
-    const apiUrl = 'http://localhost:3000';
-
     document.addEventListener('DOMContentLoaded', () => {
       const loginDiv = document.getElementById('login');
       const mainDiv = document.getElementById('main');
@@ -68,11 +63,11 @@
       const errMsg = document.getElementById('loginMsg');
       const typeEl = document.getElementById('messageType');
 
-      // Mostrar login
+      // show login, hide main
       loginDiv.classList.remove('hidden');
       mainDiv.classList.add('hidden');
 
-      // Função para exibir/ocultar campo de imagem
+      // toggle image field
       function toggleImage() {
         const imgDiv = document.getElementById('divImage');
         const lbl = document.getElementById('labelText');
@@ -81,20 +76,20 @@
           lbl.textContent = 'Texto da Mensagem:';
         } else {
           imgDiv.classList.remove('hidden');
-          lbl.textContent = 'Texto + Legenda:';
+          lbl.textContent = 'Texto + Imagem:';
         }
       }
       typeEl.addEventListener('change', toggleImage);
       toggleImage();
 
-      // Validação de senha
+      // login validation
       doLogin.addEventListener('click', () => {
-        const storedPwd = localStorage.getItem('accessPwd');
-        if (!storedPwd) {
+        const stored = localStorage.getItem('accessPwd');
+        if (!stored) {
           errMsg.textContent = 'Senha não configurada. Acesse config.html.';
           return;
         }
-        if (pwdInput.value === storedPwd) {
+        if (pwdInput.value === stored) {
           loginDiv.classList.add('hidden');
           mainDiv.classList.remove('hidden');
         } else {
@@ -103,39 +98,38 @@
       });
     });
 
-    // Função de envio
     document.getElementById('sendBtn').addEventListener('click', () => {
       const file = document.getElementById('csvFile').files[0];
       if (!file) return alert('Selecione um CSV');
+      const backendUrl = localStorage.getItem('backendUrl');
       Papa.parse(file, {
-        header: false,
-        skipEmptyLines: true,
+        header: false, skipEmptyLines: true,
         complete(results) {
           const payload = {
-            numbers: results.data.map(r => Array.isArray(r)? r[0].trim(): r.trim()).filter(n => n),
+            numbers: results.data.map(r => Array.isArray(r) ? r[0].trim() : r.trim()).filter(n => n),
             token: localStorage.getItem('apiToken'),
             endpoint: localStorage.getItem('apiEndpoint'),
             externalKey: localStorage.getItem('externalKey'),
             isClosed: document.getElementById('isClosed').checked,
             messageType: document.getElementById('messageType').value,
-            messageText: document.getElementById('messageText').value,
-            imageUrl: document.getElementById('imageUrl').value,
+            messageText: document.getElementById('messageText').value,  
+            imageUrl: document.getElementById('imageUrl').value,  
             intervalSeconds: parseInt(document.getElementById('intervalSeconds').value, 10) || 0
           };
-          fetch(`${apiUrl}/dispatch`, {
+          fetch(`${backendUrl}/dispatch`, {
             method: 'POST',
-            headers: {'Content-Type':'application/json'},
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
           })
-          .then(res => res.json())
-          .then(({jobId}) => {
+          .then(r => r.json())
+          .then(({ jobId }) => {
             const logEl = document.getElementById('log');
             logEl.textContent = `Job ${jobId} iniciado`;
             setInterval(() => {
-              fetch(`${apiUrl}/jobs/${jobId}`)
+              fetch(`${backendUrl}/jobs/${jobId}`)
                 .then(r => r.json())
                 .then(data => {
-                  logEl.textContent = data.logs.map(l=>`[${l.number}] -> ${l.success?'OK':'ERR'}`).join('\n');
+                  logEl.textContent = data.logs.map(l => `[${l.number}] -> ${l.success ? 'OK' : 'ERR'}`).join('\n');
                 });
             }, 1000);
           });

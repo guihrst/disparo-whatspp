@@ -21,6 +21,8 @@
   <input type="text" id="cfgExternalKey" placeholder="Chave Externa">
   <label for="cfgPassword">Senha de acesso:</label>
   <input type="password" id="cfgPassword" placeholder="Defina uma senha">
+  <label for="cfgBackendUrl">URL do Backend de Dispatch:</label>
+  <input type="text" id="cfgBackendUrl" placeholder="http://seu-servidor:3000">
   <button id="saveBtn">Salvar Configurações</button>
   <script>
     document.getElementById('saveBtn').onclick = () => {
@@ -28,7 +30,8 @@
       const e = document.getElementById('cfgEndpoint').value.trim();
       const k = document.getElementById('cfgExternalKey').value.trim();
       const p = document.getElementById('cfgPassword').value;
-      if (!t || !e || !k || !p) {
+      const b = document.getElementById('cfgBackendUrl').value.trim();
+      if (!t || !e || !k || !p || !b) {
         alert('Todos os campos são obrigatórios.');
         return;
       }
@@ -36,6 +39,7 @@
       localStorage.setItem('apiEndpoint', e.replace(/\/+$/, ''));
       localStorage.setItem('externalKey', k);
       localStorage.setItem('accessPwd', p);
+      localStorage.setItem('backendUrl', b.replace(/\/+$/, ''));
       window.location.href = 'send.html';
     };
   </script>
