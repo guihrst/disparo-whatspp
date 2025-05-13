@@ -1,15 +1,10 @@
 # Disparo WhatsApp - MyChatBot
 
-## Estrutura do Repositório
+## Estrutura
 
-frontend/, backend/, docker-compose.yml, docker-stack.yml, .gitignore, README.md
+frontend/, backend/, docker-compose.yml, docker-stack.yml
 
-## Como Executar
+## Executar
 
-### Docker Compose
-docker-compose up -d  
-
-### Docker Swarm (Portainer)
-- Git repo: branch main  
-- Compose path: docker-stack.yml  
-- Pull ON, Deploy  
+- Compose: docker-compose up -d  
+- Swarm: docker-stack.yml via Portainer  
