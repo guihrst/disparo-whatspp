@@ -1,15 +1,33 @@
 # Disparo WhatsApp - MyChatBot
 
-## Estrutura
+## Estrutura do Repositório
 
-frontend/, backend/, docker-compose.yml, docker-stack.yml, .gitignore, README.md
+```
+frontend/
+backend/
+docker-compose.yml
+docker-stack.yml
+stack.env
+.gitignore
+README.md
+```
 
-## Como Executar
+## Como Subir no GitHub
 
-1. Clone o repositório e navegue até a pasta principal.
-2. Em `backend/.env`, defina `ADMIN_PASSWORD=SuaSenhaSecretaAqui`.
-3. Docker Compose:
-   ```bash
-   docker-compose up -d
-   ```
-4. Docker Swarm (Portainer): usar `docker-stack.yml` (define `env_file: backend/.env`).
+1. Crie o repositório no GitHub.
+2. Faça upload ou `git push` de todos estes arquivos.
+
+## Deploy no Portainer
+
+1. No Portainer, vá em **Stacks** → **Add stack**.
+2. Em **Name**, digite `disparo-whatsapp`.
+3. **Repository URL**: `https://github.com/SEU_USUARIO/disparo-whatsapp.git`
+4. **Branch**: `main`
+5. **Compose path**: `docker-stack.yml`
+6. **Env file**: `stack.env`
+7. Clique em **Deploy the stack**.
+
+- Frontend: `http://IP_DO_SERVIDOR:8080/config.html`
+- Backend: `http://IP_DO_SERVIDOR:3000`
+
+Pronto!

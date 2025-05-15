@@ -3,14 +3,22 @@ services:
   backend:
     image: guihorst/dispatch-backend:latest
     env_file:
-      - backend/.env
+      - stack.env
     ports:
       - target: 3000
         published: 3000
         protocol: tcp
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
   frontend:
     image: guihorst/dispatch-frontend:latest
     ports:
       - target: 80
         published: 8080
         protocol: tcp
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure

@@ -20,7 +20,7 @@
   <label for="cfgExternalKey">Chave Externa (externalKey):</label>
   <input type="text" id="cfgExternalKey" placeholder="Chave Externa">
   <label for="cfgPassword">Senha de acesso:</label>
-  <input type="password" id="cfgPassword" placeholder="Defina sua senha de acesso (mestra)">
+  <input type="password" id="cfgPassword" placeholder="Defina sua senha de acesso">
   <label for="cfgBackendUrl">URL do Backend de Dispatch:</label>
   <input type="text" id="cfgBackendUrl" placeholder="http://localhost:3000">
   <button id="saveBtn">Salvar Configurações</button>
@@ -34,11 +34,11 @@
         document.getElementById('cfgBackendUrl').value = localStorage.getItem('backendUrl') || '';
       }
       document.getElementById('saveBtn').addEventListener('click', () => {
-        const t = document.getElementById('cfgToken').value.trim();
-        const e = document.getElementById('cfgEndpoint').value.trim();
-        const k = document.getElementById('cfgExternalKey').value.trim();
-        const p = document.getElementById('cfgPassword').value;
-        const b = document.getElementById('cfgBackendUrl').value.trim();
+        const t = document.getElementById('cfgToken').value.trim(),
+              e = document.getElementById('cfgEndpoint').value.trim(),
+              k = document.getElementById('cfgExternalKey').value.trim(),
+              p = document.getElementById('cfgPassword').value,
+              b = document.getElementById('cfgBackendUrl').value.trim();
         if (!t || !e || !k || !p || !b) {
           alert('Todos os campos são obrigatórios.');
           return;
@@ -48,7 +48,7 @@
         localStorage.setItem('externalKey', k);
         localStorage.setItem('accessPwd', p);
         localStorage.setItem('backendUrl', b.replace(/\/+$/, ''));
-        alert('Configurações salvas!');
+        alert('Configurações salvas com sucesso!');
         window.location.href = 'send.html';
       });
     });
