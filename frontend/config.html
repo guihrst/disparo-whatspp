@@ -12,6 +12,18 @@
   </style>
 </head>
 <body>
+  <script>
+    // Protege acesso ao config: só se a senha estiver salva e for correta
+    const savedPwd = localStorage.getItem('accessPwd');
+    if (savedPwd) {
+      const input = prompt('Digite a senha de acesso para Configurações:');
+      if (input !== savedPwd) {
+        alert('Senha incorreta.');
+        window.location.href = window.location.href;
+      }
+    }
+  </script>
+
   <h1>Configurações - Disparo WhatsApp</h1>
   <label for="cfgToken">Token da API (Bearer):</label>
   <input type="text" id="cfgToken" placeholder="Digite seu JWT">
