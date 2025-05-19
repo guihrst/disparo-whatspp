@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Logs de Envio – Disparo WhatsApp</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    button { padding: 8px 16px; margin-bottom: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Logs de Envio</h1>
+  <button id="refresh">Atualizar</button>
+  <table id="logTable">
+    <thead>
+      <tr>
+        <th>Número</th>
+        <th>Status</th>
+        <th>Data/Hora</th>
+        <th>Erro</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    (function() {
+      const backendUrl = localStorage.getItem('backendUrl');
+      const jobId = localStorage.getItem('lastJobId');
+      if (!backendUrl || !jobId) {
+        alert('Backend URL não configurado ou nenhum envio iniciado.');
+        window.location.href = 'config.html';
+        return;
+      }
+
+      async function loadLogs() {
+        try {
+          const res = await fetch(`${backendUrl}/jobs/${jobId}`);
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+          const data = await res.json();
+          const tbody = document.querySelector('#logTable tbody');
+          tbody.innerHTML = '';
+          data.logs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${log.number}</td>
+              <td>${log.success ? 'OK' : 'FAIL'}</td>
+              <td>${new Date(log.timestamp).toLocaleString()}</td>
+              <td>${log.error || ''}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } catch (e) {
+          console.error('Erro ao carregar logs:', e);
+          alert('Erro ao carregar logs: ' + e.message);
+        }
+      }
+
+      document.getElementById('refresh').addEventListener('click', loadLogs);
+      loadLogs();
+      setInterval(loadLogs, 5000);
+    })();
+  </script>
+</body>
+</html>
