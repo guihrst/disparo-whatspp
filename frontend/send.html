@@ -75,6 +75,34 @@
       typeEl.addEventListener('change', toggleImage);
       toggleImage();
 
+      function renderLogs(logs) {
+        logEl.textContent = logs
+          .map(l => `[${l.timestamp}] ${l.number} → ${l.success ? 'OK' : 'FAIL: ' + l.error}`)
+          .join('\n');
+      }
+
+      // Polling function with cache
+      function startPolling(jobId) {
+        const cacheKey = 'logs_' + jobId;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          renderLogs(JSON.parse(cached));
+        } else {
+          logEl.textContent = `Carregando logs do job ${jobId}...`;
+        }
+        setInterval(() => {
+          fetch(`${localStorage.getItem('backendUrl')}/jobs/${jobId}`)
+            .then(r => r.json())
+            .then(data => {
+              localStorage.setItem(cacheKey, JSON.stringify(data.logs));
+              renderLogs(data.logs);
+            })
+            .catch(() => {
+              logEl.textContent += '\nErro ao obter logs';
+            });
+        }, 2000);
+      }
+
       doLogin.addEventListener('click', () => {
         const stored = localStorage.getItem('accessPwd');
         if (!stored) {
@@ -90,22 +118,6 @@
           errMsg.textContent = 'Senha incorreta.';
         }
       });
-
-      function startPolling(jobId) {
-        logEl.textContent = `Carregando logs do job ${jobId}...\n`;
-        setInterval(() => {
-          fetch(`${localStorage.getItem('backendUrl')}/jobs/${jobId}`)
-            .then(r => r.json())
-            .then(data => {
-              logEl.textContent = data.logs
-                .map(l => `[${l.timestamp}] ${l.number} → ${l.success ? 'OK' : 'FAIL: ' + l.error}`)
-                .join('\n');
-            })
-            .catch(() => {
-              logEl.textContent += '\nErro ao obter logs';
-            });
-        }, 2000);
-      }
 
       document.getElementById('sendBtn').addEventListener('click', () => {
         const file = document.getElementById('csvFile').files[0];
@@ -132,6 +144,8 @@
             .then(r => r.json())
             .then(({ jobId }) => {
               localStorage.setItem('lastJobId', jobId);
+              // Clear old cache for this job
+              localStorage.removeItem('logs_' + jobId);
               startPolling(jobId);
             });
           }
