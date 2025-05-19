@@ -53,6 +53,13 @@
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      const backendUrl = localStorage.getItem('backendUrl');
+      if (!backendUrl) {
+        alert('Backend URL não configurado. Acesse config.html e defina o endpoint do backend.');
+        window.location.href = 'config.html';
+        return;
+      }
+
       const loginDiv = document.getElementById('login');
       const mainDiv = document.getElementById('main');
       const doLogin = document.getElementById('doLogin');
@@ -92,17 +99,18 @@
 
         async function fetchLogs() {
           try {
-            const res = await fetch(\`\${localStorage.getItem('backendUrl')}/jobs/\${jobId}\`);
-            if (!res.ok) throw new Error('Erro de rede');
+            const res = await fetch(`${backendUrl}/jobs/${jobId}`);
+            if (!res.ok) throw new Error('Status ' + res.status);
             const data = await res.json();
             localStorage.setItem(cacheKey, JSON.stringify(data.logs));
             renderLogs(data.logs);
           } catch (e) {
+            console.error('Erro ao obter logs:', e);
             logEl.textContent += '\nErro ao obter logs';
           }
         }
 
-        fetchLogs(); // fetch immediately
+        fetchLogs();
         setInterval(fetchLogs, 2000);
       }
 
@@ -139,9 +147,9 @@
               imageUrl: document.getElementById('imageUrl').value,
               intervalSeconds: parseInt(document.getElementById('intervalSeconds').value, 10) || 0
             };
-            fetch(\`\${localStorage.getItem('backendUrl')}/dispatch\`, {
+            fetch(`${backendUrl}/dispatch`, {
               method: 'POST',
-              headers: {'Content-Type':'application/json'},
+              headers: {'Content-Type': 'application/json'},
               body: JSON.stringify(payload)
             })
             .then(r => r.json())
@@ -149,6 +157,10 @@
               localStorage.setItem('lastJobId', jobId);
               localStorage.removeItem('logs_' + jobId);
               startPolling(jobId);
+            })
+            .catch(e => {
+              console.error('Erro no dispatch:', e);
+              alert('Falha ao iniciar envio: ' + e.message);
             });
           }
         });
