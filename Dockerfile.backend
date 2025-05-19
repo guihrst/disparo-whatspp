@@ -1,7 +1,9 @@
 FROM node:18-alpine
 WORKDIR /app
-COPY backend/package.json ./
+# Copy root package.json and install
+COPY package.json ./
 RUN npm install --production
-COPY backend .
+# Copy backend source code
+COPY backend ./
 EXPOSE 3000
 CMD ["node", "index.js"]
