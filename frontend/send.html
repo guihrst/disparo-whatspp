@@ -54,16 +54,16 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const loginDiv = document.getElementById('login');
-      const mainDiv  = document.getElementById('main');
-      const doLogin  = document.getElementById('doLogin');
+      const mainDiv = document.getElementById('main');
+      const doLogin = document.getElementById('doLogin');
       const pwdInput = document.getElementById('loginPwd');
-      const errMsg   = document.getElementById('loginMsg');
-      const typeEl   = document.getElementById('messageType');
-      const logEl    = document.getElementById('log');
+      const errMsg = document.getElementById('loginMsg');
+      const typeEl = document.getElementById('messageType');
+      const logEl = document.getElementById('log');
 
       function toggleImage() {
         const imgDiv = document.getElementById('divImage');
-        const lbl    = document.getElementById('labelText');
+        const lbl = document.getElementById('labelText');
         if (typeEl.value === 'text') {
           imgDiv.classList.add('hidden');
           lbl.textContent = 'Texto da Mensagem:';
@@ -81,7 +81,6 @@
           .join('\n');
       }
 
-      // Polling function with cache
       function startPolling(jobId) {
         const cacheKey = 'logs_' + jobId;
         const cached = localStorage.getItem(cacheKey);
@@ -90,17 +89,21 @@
         } else {
           logEl.textContent = `Carregando logs do job ${jobId}...`;
         }
-        setInterval(() => {
-          fetch(`${localStorage.getItem('backendUrl')}/jobs/${jobId}`)
-            .then(r => r.json())
-            .then(data => {
-              localStorage.setItem(cacheKey, JSON.stringify(data.logs));
-              renderLogs(data.logs);
-            })
-            .catch(() => {
-              logEl.textContent += '\nErro ao obter logs';
-            });
-        }, 2000);
+
+        async function fetchLogs() {
+          try {
+            const res = await fetch(\`\${localStorage.getItem('backendUrl')}/jobs/\${jobId}\`);
+            if (!res.ok) throw new Error('Erro de rede');
+            const data = await res.json();
+            localStorage.setItem(cacheKey, JSON.stringify(data.logs));
+            renderLogs(data.logs);
+          } catch (e) {
+            logEl.textContent += '\nErro ao obter logs';
+          }
+        }
+
+        fetchLogs(); // fetch immediately
+        setInterval(fetchLogs, 2000);
       }
 
       doLogin.addEventListener('click', () => {
@@ -136,7 +139,7 @@
               imageUrl: document.getElementById('imageUrl').value,
               intervalSeconds: parseInt(document.getElementById('intervalSeconds').value, 10) || 0
             };
-            fetch(`${localStorage.getItem('backendUrl')}/dispatch`, {
+            fetch(\`\${localStorage.getItem('backendUrl')}/dispatch\`, {
               method: 'POST',
               headers: {'Content-Type':'application/json'},
               body: JSON.stringify(payload)
@@ -144,7 +147,6 @@
             .then(r => r.json())
             .then(({ jobId }) => {
               localStorage.setItem('lastJobId', jobId);
-              // Clear old cache for this job
               localStorage.removeItem('logs_' + jobId);
               startPolling(jobId);
             });
