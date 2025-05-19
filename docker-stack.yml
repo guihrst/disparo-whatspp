@@ -16,7 +16,11 @@ services:
       - target: 3000
         published: 3000
         protocol: tcp
+    volumes:
+      - job_data:/app/data
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
+volumes:
+  job_data:

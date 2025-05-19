@@ -17,3 +17,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    volumes:
+      - job_data:/app/data
+volumes:
+  job_data:
