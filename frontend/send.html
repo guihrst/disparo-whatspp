@@ -12,7 +12,7 @@
     label { display: block; margin-top: 10px; font-weight: bold; }
     input, textarea, select, button { width: 100%; padding: 8px; margin-top: 4px; }
     button { width: auto; cursor: pointer; }
-    #log { background: #f4f4f4; padding: 10px; height: 200px; overflow-y: auto; white-space: pre-wrap; margin-top: 20px; }
+    #log { background: #f4f4f4; padding: 10px; height: 300px; overflow-y: auto; white-space: pre-wrap; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -38,11 +38,11 @@
     </select>
 
     <label id="labelText" for="messageText">Texto da Mensagem:</label>
-    <textarea id="messageText" rows="4" placeholder="Digite sua mensagem"></textarea>
+    <textarea id="messageText" rows="4"></textarea>
 
     <div id="divImage" class="hidden">
       <label for="imageUrl">URL da Imagem:</label>
-      <input type="url" id="imageUrl" placeholder="https://exemplo.com/imagem.png">
+      <input type="url" id="imageUrl">
     </div>
 
     <label for="intervalSeconds">Intervalo (segundos):</label>
@@ -54,24 +54,22 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const loginDiv = document.getElementById('login');
-      const mainDiv = document.getElementById('main');
-      const doLogin = document.getElementById('doLogin');
+      const mainDiv  = document.getElementById('main');
+      const doLogin  = document.getElementById('doLogin');
       const pwdInput = document.getElementById('loginPwd');
-      const errMsg = document.getElementById('loginMsg');
-      const typeEl = document.getElementById('messageType');
-
-      loginDiv.classList.remove('hidden');
-      mainDiv.classList.add('hidden');
+      const errMsg   = document.getElementById('loginMsg');
+      const typeEl   = document.getElementById('messageType');
+      const logEl    = document.getElementById('log');
 
       function toggleImage() {
         const imgDiv = document.getElementById('divImage');
-        const lbl = document.getElementById('labelText');
+        const lbl    = document.getElementById('labelText');
         if (typeEl.value === 'text') {
           imgDiv.classList.add('hidden');
           lbl.textContent = 'Texto da Mensagem:';
         } else {
           imgDiv.classList.remove('hidden');
-          lbl.textContent = 'Texto + Legenda:';  
+          lbl.textContent = 'Texto + Legenda:';
         }
       }
       typeEl.addEventListener('change', toggleImage);
@@ -86,49 +84,58 @@
         if (pwdInput.value === stored) {
           loginDiv.classList.add('hidden');
           mainDiv.classList.remove('hidden');
+          const lastJob = localStorage.getItem('lastJobId');
+          if (lastJob) startPolling(lastJob);
         } else {
           errMsg.textContent = 'Senha incorreta.';
         }
       });
-    });
-    document.getElementById('sendBtn').addEventListener('click', () => {
-      const file = document.getElementById('csvFile').files[0];
-      if (!file) return alert('Selecione um CSV');
-      const backendUrl = localStorage.getItem('backendUrl');
-      const logEl = document.getElementById('log');
-      logEl.textContent = '';
-      Papa.parse(file, {
-        header: false, skipEmptyLines: true,
-        complete(results) {
-          const payload = {
-            numbers: results.data.map(r => Array.isArray(r) ? r[0].trim() : r.trim()).filter(n => n),
-            token: localStorage.getItem('apiToken'),
-            endpoint: localStorage.getItem('apiEndpoint'),
-            externalKey: localStorage.getItem('externalKey'),
-            isClosed: document.getElementById('isClosed').checked,
-            messageType: document.getElementById('messageType').value,
-            messageText: document.getElementById('messageText').value,
-            imageUrl: document.getElementById('imageUrl').value,
-            intervalSeconds: parseInt(document.getElementById('intervalSeconds').value, 10) || 0
-          };
-          fetch(`${backendUrl}/dispatch`, {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify(payload)
-          })
-          .then(r => r.json())
-          .then(({ jobId }) => {
-            logEl.textContent = `Job ${jobId} iniciado
-`;
-            setInterval(() => {
-              fetch(`${backendUrl}/jobs/${jobId}`)
-                .then(r => r.json())
-                .then(data => {
-                  logEl.textContent = data.logs.map(l => `[${l.number}] -> ${l.success ? 'OK' : 'ERR: ' + (l.error||'fail')}]`).join('\n');
-                });
-            }, 1000);
-          });
-        }
+
+      function startPolling(jobId) {
+        logEl.textContent = `Carregando logs do job ${jobId}...\n`;
+        setInterval(() => {
+          fetch(`${localStorage.getItem('backendUrl')}/jobs/${jobId}`)
+            .then(r => r.json())
+            .then(data => {
+              logEl.textContent = data.logs
+                .map(l => `[${l.timestamp}] ${l.number} → ${l.success ? 'OK' : 'FAIL: ' + l.error}`)
+                .join('\n');
+            })
+            .catch(() => {
+              logEl.textContent += '\nErro ao obter logs';
+            });
+        }, 2000);
+      }
+
+      document.getElementById('sendBtn').addEventListener('click', () => {
+        const file = document.getElementById('csvFile').files[0];
+        if (!file) return alert('Selecione um CSV');
+        Papa.parse(file, {
+          header: false, skipEmptyLines: true,
+          complete(results) {
+            const payload = {
+              numbers: results.data.map(r => Array.isArray(r) ? r[0].trim() : r.trim()).filter(n => n),
+              token: localStorage.getItem('apiToken'),
+              endpoint: localStorage.getItem('apiEndpoint'),
+              externalKey: localStorage.getItem('externalKey'),
+              isClosed: document.getElementById('isClosed').checked,
+              messageType: document.getElementById('messageType').value,
+              messageText: document.getElementById('messageText').value,
+              imageUrl: document.getElementById('imageUrl').value,
+              intervalSeconds: parseInt(document.getElementById('intervalSeconds').value, 10) || 0
+            };
+            fetch(`${localStorage.getItem('backendUrl')}/dispatch`, {
+              method: 'POST',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(({ jobId }) => {
+              localStorage.setItem('lastJobId', jobId);
+              startPolling(jobId);
+            });
+          }
+        });
       });
     });
   </script>
