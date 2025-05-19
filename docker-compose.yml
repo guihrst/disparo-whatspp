@@ -1,11 +1,11 @@
-version: "3.8"
+version: '3.8'
 services:
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
     volumes:
-      - job_data:/app/data
+      - job_data:/app/backend/data
     ports:
       - "3000:3000"
     restart: unless-stopped
@@ -15,7 +15,7 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     ports:
-      - "8080:80"
+      - "80:80"
     restart: unless-stopped
 
 volumes:
