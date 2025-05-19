@@ -5,13 +5,13 @@ services:
     volumes:
       - job_data:/app/backend/data
     ports:
-      - "3000:3000"
+      - "3001:3000"
     restart: unless-stopped
 
   frontend:
     image: meuuser/disparo-frontend:latest
     ports:
-      - "80:80"
+      - "8080:80"
     restart: unless-stopped
 
 volumes:
