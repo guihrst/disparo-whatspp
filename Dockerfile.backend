@@ -1,15 +1,7 @@
 FROM node:18-alpine
 WORKDIR /app
-
-# Copy root package.json and install dependencies
-COPY package.json ./
+COPY backend/package.json ./
 RUN npm install --production
-
-# Copy backend application code
-COPY backend ./backend
-
-# Set working directory to backend
-WORKDIR /app/backend
+COPY backend .
 EXPOSE 3000
-
 CMD ["node", "index.js"]
