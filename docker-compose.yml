@@ -1,19 +1,18 @@
-version: "3.7"
+version: '3.8'
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile.frontend
-    ports:
-      - "8080:80"
   backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile.backend
+    image: meuuser/disparo-backend:latest
+    volumes:
+      - job_data:/app/backend/data
     ports:
       - "3000:3000"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    restart: unless-stopped
+
+  frontend:
+    image: meuuser/disparo-frontend:latest
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+volumes:
+  job_data:
