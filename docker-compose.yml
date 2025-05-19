@@ -1,19 +1,22 @@
-version: "3.7"
+version: '3.8'
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile.frontend
-    ports:
-      - "8080:80"
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile.backend
+      dockerfile: Dockerfile.backend
+    volumes:
+      - backend-data:/app/data
     ports:
       - "3000:3000"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+volumes:
+  backend-data:
