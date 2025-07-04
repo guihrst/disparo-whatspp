@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  disparo-zpro:
+    image: guihorst/disparo
+    container_name: disparo-zpro
+    ports:
+      - "8081:80"
+    restart: unless-stopped
